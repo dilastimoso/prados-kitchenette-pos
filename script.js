@@ -1,6 +1,4 @@
-// --- DATABASE (Based on ERD Entities) ---
-
-// 1. MENU_ITEM Table
+// --- MENU DATABASE ---
 const menuData = [
     // RICE TOPPINGS
     { id: 101, name: "Chicken", price: 68.00, category: "Rice Toppings" },
@@ -47,7 +45,6 @@ const menuData = [
     { id: 142, name: "Beef Steak", price: 110.00, category: "Rice Toppings" },
     { id: 143, name: "Gulam Rice", price: 105.00, category: "Rice Toppings" },
     { id: 144, name: "Fried Tilapia", price: 85.00, category: "Rice Toppings" },
-
     // SOUP
     { id: 201, name: "Hototay", price: 85.00, category: "Soup" },
     { id: 202, name: "Tinolang Baboy", price: 90.00, category: "Soup" },
@@ -65,7 +62,6 @@ const menuData = [
     { id: 214, name: "Tinolang Manok", price: 250.00, category: "Soup" },
     { id: 215, name: "1/2 Tinolang Manok", price: 150.00, category: "Soup" },
     { id: 216, name: "Balbacua", price: 50.00, category: "Soup" },
-
     // NOODLES
     { id: 301, name: "Mami", price: 50.00, category: "Noodles" },
     { id: 302, name: "Pancit", price: 130.00, category: "Noodles" },
@@ -80,7 +76,6 @@ const menuData = [
     { id: 311, name: "Canton Con", price: 160.00, category: "Noodles" },
     { id: 312, name: "Pancit Con Chopsuey", price: 160.00, category: "Noodles" },
     { id: 313, name: "Sotanghon Con", price: 160.00, category: "Noodles" },
-
     // SEAFOODS
     { id: 401, name: "Adobong Hipon", price: 200.00, category: "Seafoods" },
     { id: 402, name: "Shrimp Omelette", price: 80.00, category: "Seafoods" },
@@ -95,14 +90,12 @@ const menuData = [
     { id: 411, name: "Hyscian Sotanghon", price: 160.00, category: "Seafoods" },
     { id: 412, name: "Hyscian Pancit", price: 160.00, category: "Seafoods" },
     { id: 413, name: "Daing na Bangus (2pcs)", price: 150.00, category: "Seafoods" },
-
     // HITO/CATFISH
     { id: 501, name: "Fried Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 502, name: "Spicy Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 503, name: "Adobong Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 504, name: "Ginataang Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 505, name: "Curry Hito", price: 300.00, category: "Hito/Catfish" },
-
     // BEEF
     { id: 601, name: "Gulam Guisado", price: 100.00, category: "Beef" },
     { id: 602, name: "Beef Omelet", price: 90.00, category: "Beef" },
@@ -113,7 +106,6 @@ const menuData = [
     { id: 607, name: "Beef Ampalaya", price: 220.00, category: "Beef" },
     { id: 608, name: "Beef w/ Onion", price: 250.00, category: "Beef" },
     { id: 609, name: "Beef Steak", price: 250.00, category: "Beef" },
-
     // APPETIZERS
     { id: 701, name: "Pork Sisig", price: 115.00, category: "Appetizers" },
     { id: 702, name: "Beef Sisig", price: 115.00, category: "Appetizers" },
@@ -123,20 +115,17 @@ const menuData = [
     { id: 706, name: "Spicy Gambas", price: 190.00, category: "Appetizers" },
     { id: 707, name: "Onion Rings", price: 60.00, category: "Appetizers" },
     { id: 708, name: "Camaron Rebosado", price: 190.00, category: "Appetizers" },
-
     // VEGETABLES
     { id: 801, name: "Chopsuey", price: 150.00, category: "Vegetables" },
     { id: 802, name: "Pinakbet", price: 140.00, category: "Vegetables" },
     { id: 803, name: "Samsi", price: 120.00, category: "Vegetables" },
     { id: 804, name: "Tortang Talong", price: 30.00, category: "Vegetables" },
-
     // RICE
     { id: 901, name: "Plain Cup of Rice", price: 15.00, category: "Rice" },
     { id: 902, name: "Garlic Rice", price: 50.00, category: "Rice" },
     { id: 903, name: "Fried Rice (S)", price: 90.00, category: "Rice" },
     { id: 904, name: "Fried Rice (L)", price: 130.00, category: "Rice" },
-
-    // PORK (Main Dishes)
+    // PORK
     { id: 1001, name: "Pork Omelette", price: 80.00, category: "Pork" },
     { id: 1002, name: "Pork Torta", price: 90.00, category: "Pork" },
     { id: 1003, name: "Litson Kawali (Platter)", price: 220.00, category: "Pork" },
@@ -156,8 +145,7 @@ const menuData = [
     { id: 1017, name: "Humba", price: 200.00, category: "Pork" },
     { id: 1018, name: "Crispy Pata", price: 550.00, category: "Pork" },
     { id: 1019, name: "Patatim", price: 550.00, category: "Pork" },
-
-    // CHICKEN (Main Dishes)
+    // CHICKEN
     { id: 1101, name: "Chicken Adobo", price: 260.00, category: "Chicken" },
     { id: 1102, name: "Chicken Curry", price: 170.00, category: "Chicken" },
     { id: 1103, name: "Chicken Pork Adobo", price: 260.00, category: "Chicken" },
@@ -172,19 +160,18 @@ const menuData = [
     { id: 1112, name: "Grouted Chicken", price: 160.00, category: "Chicken" }
 ];
 
-// 2. INVENTORY Table (Static Initialization)
-// NO MORE RANDOM SIMULATION
+// --- INVENTORY DATABASE (Initialized Static 50) ---
 const inventoryData = menuData.map(item => ({
     inventory_id: `INV-${item.id}`,
     menu_id: item.id,
     name: item.name,
-    quantity_on_hand: 50, // Static default
-    expiration_date: "2026-12-31" // Static default
+    quantity_on_hand: 50, // Static Default Stock
+    expiration_date: "2026-12-31" // Static Default Exp
 }));
 
 let cart = [];
 
-// --- LOGIC ---
+// --- INITIALIZATION & DISPLAY ---
 
 function initCategories() {
     const categories = ["All", ...new Set(menuData.map(item => item.category))];
@@ -220,12 +207,15 @@ function filterMenu(category) {
     });
 }
 
+// --- CART LOGIC ---
+
 function addToCart(id) {
     const inv = inventoryData.find(i => i.menu_id === id);
     if(inv.quantity_on_hand <= 0) {
         return showCustomModal("Out of Stock", `<p>Sorry, <b>${inv.name}</b> is currently unavailable.</p>`, false);
     }
     
+    // Check if adding exceeds stock
     const inCart = cart.filter(i => i.id === id).length;
     if(inCart + 1 > inv.quantity_on_hand) {
         return showCustomModal("Low Stock", `<p>Only ${inv.quantity_on_hand} available.</p>`, false);
@@ -263,9 +253,8 @@ function removeFromCart(index) {
     renderCart();
 }
 
-// --- INVENTORY MANAGEMENT (SET EXPIRATION) ---
+// --- INVENTORY MANAGEMENT (EDITABLE) ---
 
-// Show Interactive Inventory Table
 function showInventory() {
     let html = `
         <div style="max-height:300px; overflow-y:auto; padding-right:5px;">
@@ -292,10 +281,9 @@ function showInventory() {
 
     html += `</tbody></table></div>`;
     
-    // Show Modal with "Save Changes" button
     showCustomModal("Manage Stock", html, false);
     
-    // Add Save Button Manually
+    // Inject Save Button
     const actionsEl = document.getElementById('modal-actions');
     actionsEl.innerHTML = `
         <button class="modal-btn cancel" onclick="closeModal()">Close</button>
@@ -304,7 +292,6 @@ function showInventory() {
 }
 
 function saveInventoryChanges() {
-    // Loop through inputs and update data
     inventoryData.forEach(item => {
         const qtyInput = document.getElementById(`qty-${item.menu_id}`);
         const dateInput = document.getElementById(`date-${item.menu_id}`);
@@ -316,14 +303,15 @@ function saveInventoryChanges() {
     });
 
     // Refresh UI
-    const activeTab = document.querySelector('.tab-btn.active').innerText;
+    const activeBtn = document.querySelector('.tab-btn.active');
+    const activeTab = activeBtn ? activeBtn.innerText : 'All';
     filterMenu(activeTab);
     
     closeModal();
     setTimeout(() => showCustomModal("Success", "<p>Inventory updated successfully.</p>", false), 300);
 }
 
-// Run expiration check on load (Alert if needed)
+// Check expirations on load
 function checkExpirations() {
     const today = new Date().toISOString().split('T')[0];
     const expired = inventoryData.filter(i => i.expiration_date <= today);
@@ -338,8 +326,7 @@ function checkExpirations() {
     }
 }
 
-
-// --- MODAL & CHECKOUT ---
+// --- MODAL & CHECKOUT (CRASH PROOF) ---
 
 function showCustomModal(title, htmlContent, isConfirmType, callback) {
     const modal = document.getElementById('custom-modal');
@@ -369,12 +356,24 @@ function closeModal() {
     document.getElementById('custom-modal').classList.remove('active');
 }
 
-// FIXED CHECKOUT FUNCTION
+// SAFE CHECKOUT FUNCTION
 function checkout() {
-    const tableNum = document.getElementById('table-num').value;
-    const tableStatus = document.getElementById('table-status').value;
-    const custName = document.getElementById('cust-name').value;
-    const totalText = document.getElementById('total-price').innerText;
+    // Safety checks for missing elements
+    const tableNumEl = document.getElementById('table-num');
+    const tableStatusEl = document.getElementById('table-status');
+    const custNameEl = document.getElementById('cust-name');
+    const totalEl = document.getElementById('total-price');
+
+    if (!tableNumEl || !custNameEl || !totalEl) {
+        alert("Error: Missing input fields in HTML. Please verify index.html.");
+        return;
+    }
+
+    const tableNum = tableNumEl.value;
+    // Fallback if tableStatus is missing in HTML
+    const tableStatus = tableStatusEl ? tableStatusEl.value : "Occupied"; 
+    const custName = custNameEl.value;
+    const totalText = totalEl.innerText;
 
     if(cart.length === 0) return showCustomModal("Cart Empty", "<p>Please add items.</p>", false);
     if(!tableNum || !custName) return showCustomModal("Missing Info", "<p>Enter Table # and Name.</p>", false);
@@ -421,7 +420,8 @@ function finalizeOrder(name, table, total) {
     closeModal();
     
     // Refresh Grid
-    const activeTab = document.querySelector('.tab-btn.active').innerText;
+    const activeBtn = document.querySelector('.tab-btn.active');
+    const activeTab = activeBtn ? activeBtn.innerText : 'All';
     filterMenu(activeTab);
 
     setTimeout(() => {
@@ -440,7 +440,7 @@ function finalizeOrder(name, table, total) {
     document.getElementById('cust-name').value = '';
 }
 
-// Initialize
+// Start
 initCategories();
 displayMenu(menuData);
 checkExpirations();
