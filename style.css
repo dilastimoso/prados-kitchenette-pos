@@ -37,16 +37,17 @@ body {
 .brand-text h1 { font-size: 1.2rem; color: var(--primary); font-weight: 800; }
 .brand-text span { color: var(--accent); }
 
-.header-actions { grid-area: actions; justify-self: end; display: flex; gap: 8px; }
+.header-actions { grid-area: actions; justify-self: end; display: flex; gap: 8px; flex-wrap: wrap; }
 .icon-btn {
     background: rgba(255,255,255,0.5);
     border: 1px solid var(--glass-border);
     padding: 8px 12px;
     border-radius: 12px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     transition: 0.2s;
+    white-space: nowrap;
 }
 .icon-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.8); }
 
@@ -283,6 +284,23 @@ input:checked + .slider:before { transform: translateX(16px); }
     border-radius: 5px;
     font-size: 0.9rem;
 }
+
+/* --- SALES DASHBOARD STYLES --- */
+.sales-dashboard { text-align: left; }
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+.summary-card {
+    background: rgba(45, 106, 79, 0.1);
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid rgba(45, 106, 79, 0.2);
+}
+.summary-card h5 { margin: 0; color: #555; font-size: 0.8rem; text-transform: uppercase; }
+.summary-card h2 { margin: 5px 0 0 0; color: var(--primary); font-size: 1.5rem; }
+
+.sales-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; }
+.sales-table th { text-align: left; border-bottom: 2px solid #ddd; padding: 5px; color: #555; }
+.sales-table td { border-bottom: 1px solid #eee; padding: 8px 5px; }
 
 /* --- MOBILE FIXES --- */
 @media (max-width: 900px) {
