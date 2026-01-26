@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prado's Kitchenette POS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="pos-container">
+        <header class="top-bar">
+            <div class="logo-section">
+                <img src="logo.jpg" alt="Prado's Logo" class="logo">
+                <h1>Prado's <span>Kitchenette</span></h1>
+            </div>
+            <div class="category-tabs">
+                <button class="tab-btn active" onclick="filterMenu('all')">All</button>
+                <button class="tab-btn" onclick="filterMenu('Pork')">Pork</button>
+                <button class="tab-btn" onclick="filterMenu('Chicken')">Chicken</button>
+                <button class="tab-btn" onclick="filterMenu('Seafoods')">Seafood</button>
+                <button class="tab-btn" onclick="filterMenu('Rice Toppings')">Rice Toppings</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="menu-grid" id="menu-grid">
+                </section>
+
+            <aside class="order-sidebar">
+                <h2>Current Order</h2>
+                <div class="cart-items" id="cart-items">
+                    <p class="empty-msg">Your cart is empty</p>
+                </div>
+                <div class="order-footer">
+                    <div class="total-row">
+                        <span>Total</span>
+                        <span id="total-price">₱0.00</span>
+                    </div>
+                    <button class="checkout-btn" onclick="checkout()">Place Order</button>
+                </div>
+            </aside>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
