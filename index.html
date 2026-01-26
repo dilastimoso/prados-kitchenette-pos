@@ -19,13 +19,13 @@
             
             <div class="header-actions">
                 <button class="icon-btn" onclick="showOrders()" title="View Orders">
-                    📜 Orders
+                    📜 Kitchen/Orders
                 </button>
                 <button class="icon-btn" onclick="showInventory()" title="Manage Stock">
                     📦 Stock
                 </button>
                 <button class="icon-btn" onclick="showPaymentSettings()" title="Payment Settings">
-                    💳 Payments
+                    💳 Settings
                 </button>
             </div>
 
@@ -49,6 +49,16 @@
                         </select>
                     </div>
                     <input type="text" id="cust-name" class="form-input" placeholder="Customer Name" required>
+                    <input type="tel" id="cust-phone" class="form-input" placeholder="Phone (Loyalty)" style="margin-top:5px;">
+                    <input type="email" id="cust-email" class="form-input" placeholder="Email (Optional)" style="margin-top:5px;">
+                    
+                    <div class="payment-row" style="margin-top:10px; border-top:1px solid rgba(0,0,0,0.1); padding-top:10px;">
+                        <span style="font-size:0.9rem; font-weight:bold; color:var(--primary);">PWD/Senior Discount (20%)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="discount-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="cart-items" id="cart-items">
