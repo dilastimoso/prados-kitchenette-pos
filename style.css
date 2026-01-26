@@ -5,7 +5,6 @@
     --glass-border: rgba(255, 255, 255, 0.4);
     --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
     --text: #1a1a1a;
-    --text-light: #f0f0f0;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -19,7 +18,7 @@ body {
 
 .pos-container { display: flex; flex-direction: column; height: 100vh; }
 
-/* --- 3D Glass Header --- */
+/* Header */
 .top-bar {
     background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(12px);
@@ -38,7 +37,7 @@ body {
 .logo-section h1 { font-size: 1.5rem; color: var(--primary); text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-weight: 800; }
 .logo-section span { color: var(--accent); }
 
-/* --- 3D Glass Tabs --- */
+/* Tabs */
 .category-tabs { display: flex; gap: 12px; overflow-x: auto; padding: 10px 5px; scrollbar-width: none; }
 .tab-btn {
     padding: 10px 20px;
@@ -61,7 +60,7 @@ body {
     transform: translateY(1px);
 }
 
-/* --- Main Layout --- */
+/* Main Layout */
 .main-content { display: flex; flex: 1; overflow: hidden; padding: 20px; gap: 20px; }
 
 .menu-grid {
@@ -73,7 +72,7 @@ body {
     padding-right: 10px;
 }
 
-/* --- 3D Glass Menu Card --- */
+/* Menu Card */
 .menu-card {
     background: rgba(255, 255, 255, 0.45);
     backdrop-filter: blur(8px);
@@ -97,7 +96,7 @@ body {
 .menu-card h3 { font-size: 0.95rem; margin-bottom: 8px; color: #333; height: 40px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .menu-card .price { color: var(--accent); font-weight: 800; font-size: 1.1rem; text-shadow: 0 1px 1px rgba(255,255,255,0.5); }
 
-/* --- 3D Glass Sidebar --- */
+/* Sidebar */
 .order-sidebar {
     flex: 1;
     background: rgba(255, 255, 255, 0.35);
@@ -112,7 +111,6 @@ body {
 
 .sidebar-header h2 { color: var(--primary); margin-bottom: 15px; text-align: center; }
 
-/* Customer Inputs */
 .customer-info { margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
 .form-input {
     width: 100%;
@@ -127,7 +125,6 @@ body {
 }
 .form-input:focus { background: #fff; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1); }
 
-/* Cart List */
 .cart-items { flex: 1; overflow-y: auto; margin: 10px 0; padding-right: 5px; border-top: 1px solid rgba(0,0,0,0.05); }
 .cart-item {
     display: flex;
@@ -149,7 +146,6 @@ body {
     color: var(--primary);
 }
 
-/* 3D Checkout Button */
 .checkout-btn {
     width: 100%;
     padding: 16px;
@@ -167,16 +163,16 @@ body {
 }
 .checkout-btn:active { transform: scale(0.98); box-shadow: inset 3px 3px 8px rgba(0,0,0,0.3); }
 
-/* --- iOS 26 Liquid Glass Modal Styles --- */
+/* --- 3D LIQUID GLASS MODAL STYLES --- */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.3); /* Darker dim */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -192,8 +188,8 @@ body {
 }
 
 .modal-box {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(40px);
+    background: rgba(255, 255, 255, 0.75); /* High opacity glass */
+    backdrop-filter: blur(40px); /* Heavy blur */
     -webkit-backdrop-filter: blur(40px);
     border: 1px solid rgba(255, 255, 255, 0.8);
     border-radius: 35px;
@@ -201,16 +197,14 @@ body {
     width: 90%;
     max-width: 450px;
     box-shadow: 
-        0 20px 60px rgba(0,0,0,0.15),
+        0 20px 60px rgba(0,0,0,0.2),
         inset 0 0 0 1px rgba(255,255,255,0.5);
     transform: scale(0.85);
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     text-align: center;
 }
 
-.modal-overlay.active .modal-box {
-    transform: scale(1);
-}
+.modal-overlay.active .modal-box { transform: scale(1); }
 
 .modal-box h3 {
     font-size: 1.4rem;
@@ -228,12 +222,13 @@ body {
     text-align: left;
 }
 
-/* Review Order List inside Modal */
+/* Modal Internal List */
 .review-list {
-    background: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.5);
     border-radius: 15px;
     padding: 15px;
     margin-top: 10px;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
 }
 .review-item {
     display: flex;
@@ -252,11 +247,7 @@ body {
     color: var(--accent);
 }
 
-.modal-actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
+.modal-actions { display: flex; gap: 15px; justify-content: center; }
 
 .modal-btn {
     flex: 1;
@@ -272,7 +263,7 @@ body {
 .modal-btn:active { transform: scale(0.95); }
 
 .modal-btn.cancel {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.1);
     color: #555;
 }
 
@@ -281,14 +272,8 @@ body {
     color: white;
     box-shadow: 0 4px 15px rgba(45, 106, 79, 0.3);
 }
+.modal-btn.only-ok { background: var(--primary); color: white; width: 100%; }
 
-.modal-btn.only-ok {
-    background: var(--primary);
-    color: white;
-    width: 100%;
-}
-
-/* --- Responsive --- */
 @media (max-width: 768px) {
     .main-content { flex-direction: column; }
     .order-sidebar { height: auto; max-height: 50vh; }
