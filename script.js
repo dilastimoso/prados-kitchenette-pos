@@ -417,13 +417,13 @@ function useCustomer(name) {
     closeModal();
 }
 
-// --- SALES REPORT (ROBUST FIX) ---
+// --- SALES REPORT (FIXED LOGIC) ---
 
 function showSales() {
     // 1. Calculate Stats safely
     const completedOrders = allOrders.filter(o => o.status === 'Completed');
     
-    // Total Revenue (Using numericTotal we stored)
+    // Total Revenue (Using numericTotal for reliability)
     let totalRevenue = completedOrders.reduce((sum, o) => sum + (o.numericTotal || 0), 0);
 
     // Today's Sales (Robust Date Check)
