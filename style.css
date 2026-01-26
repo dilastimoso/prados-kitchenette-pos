@@ -138,8 +138,8 @@ body {
     width: 100%;
     padding: 10px;
     border-radius: 10px;
-    border: none;
-    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.8);
     outline: none;
     font-size: 0.9rem;
 }
