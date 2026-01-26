@@ -378,67 +378,84 @@ function saveInventoryChanges() {
     setTimeout(() => showCustomModal("Success", "<p>Inventory updated successfully.</p>", false), 300);
 }
 
-function checkExpirations() {
-    const today = new Date().toISOString().split('T')[0];
-    const expired = inventoryData.filter(i => i.expiration_date <= today);
-    
-    if(expired.length > 0) {
-        let html = `<p>The following items have expired:</p><ul style="text-align:left; margin-top:10px;">`;
-        expired.forEach(item => {
-            html += `<li style="color:red; margin-bottom:5px;"><b>${item.name}</b> (Exp: ${item.expiration_date})</li>`;
-        });
-        html += `</ul>`;
-        setTimeout(() => showCustomModal("⚠️ Inventory Alert", html, false), 1000);
-    }
-}
-
 // --- ORDER MANAGEMENT ---
 
 function showOrders() {
     let pendingHTML = '';
     let completedHTML = '';
 
-    const pendingOrders = allOrders.filter(o => o.status === 'Pending');
-    const completedOrders = allOrders.filter(o => o.status !== 'Pending').reverse();
+    const pendingOrders = allOrders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled');
+    const completedOrders = allOrders.filter(o => o.status === 'Completed' || o.status === 'Cancelled').reverse();
 
+    // PENDING/COOKING/SERVED Section
     if(pendingOrders.length === 0) {
-        pendingHTML = '<p style="color:#888; text-align:center; padding:10px;">No pending orders.</p>';
+        pendingHTML = '<p style="color:#888; text-align:center; padding:10px;">No active orders.</p>';
     } else {
         pendingOrders.forEach(order => {
             let itemsList = order.items.map(i => {
                 return i.notes ? `${i.name} <i>(${i.notes})</i>` : i.name;
             }).join(', ');
 
-            // Display Payment Method in Pending too
+            // Status Logic for Button
+            let nextActionBtn = '';
+            let nextStatus = '';
+            let badgeClass = 'status-pending';
+
+            if(order.status === 'Pending') { 
+                nextStatus = 'Preparing'; 
+                nextActionBtn = `<button class="action-btn btn-progress" onclick="updateOrderStatus(${order.id}, '${nextStatus}')">Start Preparing</button>`;
+                badgeClass = 'status-pending';
+            } else if(order.status === 'Preparing') {
+                nextStatus = 'Cooking';
+                nextActionBtn = `<button class="action-btn btn-progress" onclick="updateOrderStatus(${order.id}, '${nextStatus}')">Start Cooking</button>`;
+                badgeClass = 'status-preparing';
+            } else if(order.status === 'Cooking') {
+                nextStatus = 'Served';
+                nextActionBtn = `<button class="action-btn btn-progress" onclick="updateOrderStatus(${order.id}, '${nextStatus}')">Mark Served</button>`;
+                badgeClass = 'status-cooking';
+            } else if(order.status === 'Served') {
+                nextActionBtn = `<button class="action-btn btn-complete" onclick="openPaymentModal(${order.id})">Bill & Pay</button>`;
+                badgeClass = 'status-served';
+            }
+
+            // Payment Badge logic
+            let payBadge = order.paymentStatus === 'Paid' 
+                ? `<span class="pay-badge pay-paid">PAID</span>` 
+                : `<span class="pay-badge pay-unpaid">UNPAID</span>`;
+
             pendingHTML += `
                 <div class="order-card">
                     <div class="order-header">
                         <span>#${order.id} - Table ${order.table}</span>
-                        <span class="status-badge status-pending">Pending</span>
+                        <div>
+                            <span class="status-badge ${badgeClass}">${order.status}</span>
+                            ${payBadge}
+                        </div>
                     </div>
                     <div class="order-details">
                         <b>${order.customer}</b><br>
                         ${itemsList}<br>
-                        Total: ${order.total}<br>
-                        <span style="font-size:0.8rem; color:#666;">Pay via: ${order.paymentMethod}</span>
+                        Total: <b>${order.finalTotal}</b>
                     </div>
                     <div class="order-actions">
                         <button class="action-btn btn-cancel" onclick="updateOrderStatus(${order.id}, 'Cancelled')">Cancel</button>
-                        <button class="action-btn btn-complete" onclick="updateOrderStatus(${order.id}, 'Completed')">Complete</button>
+                        ${nextActionBtn}
                     </div>
                 </div>
             `;
         });
     }
 
+    // HISTORY Section
     if(completedOrders.length === 0) {
         completedHTML = '<p style="color:#888; text-align:center; padding:10px;">No history.</p>';
     } else {
         completedOrders.forEach(order => {
             let statusClass = order.status === 'Completed' ? 'status-completed' : 'status-cancelled';
             let itemsList = order.items.map(i => i.name).join(', ');
+            let payInfo = order.status === 'Completed' ? `• <i>Paid via ${order.paymentMethod}</i>` : '';
+            let printBtn = order.status === 'Completed' ? `<button class="action-btn btn-print" onclick="printReceipt(${order.id})">🖨️ Print</button>` : '';
             
-            // Display Payment Method in History
             completedHTML += `
                 <div class="order-card" style="opacity:0.8; background:#f9f9f9;">
                     <div class="order-header">
@@ -448,8 +465,9 @@ function showOrders() {
                     <div class="order-details">
                         <b>${order.customer}</b><br>
                         ${itemsList}<br>
-                        ${order.total} • <i>${order.paymentMethod}</i>
+                        <b>${order.finalTotal}</b> ${payInfo}
                     </div>
+                    ${printBtn}
                 </div>
             `;
         });
@@ -467,6 +485,54 @@ function showOrders() {
     document.getElementById('modal-actions').innerHTML = `
         <button class="modal-btn only-ok" onclick="closeModal()">Close</button>
     `;
+}
+
+// Open Modal to Collect Payment
+function openPaymentModal(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if(!order) return;
+
+    const activeMethods = paymentMethods.filter(m => m.active);
+    let paymentSelectHTML = '';
+    
+    if(activeMethods.length === 0) {
+         paymentSelectHTML = `<p style="color:red;">No payment methods active!</p>`;
+    } else {
+        paymentSelectHTML = `
+            <div style="margin:15px 0;">
+                <label style="font-weight:bold;">Select Payment Method:</label>
+                <select id="final-payment-select" class="form-input" style="margin-top:5px;">
+                    ${activeMethods.map(m => `<option value="${m.name}">${m.name}</option>`).join('')}
+                </select>
+            </div>
+        `;
+    }
+
+    let html = `
+        <div style="text-align:center;">
+            <p>Total Amount Due</p>
+            <h2 style="color:var(--accent); font-size:2rem; margin:10px 0;">${order.finalTotal}</h2>
+            ${paymentSelectHTML}
+        </div>
+    `;
+
+    showCustomModal(`Bill: Table ${order.table}`, html, false);
+
+    document.getElementById('modal-actions').innerHTML = `
+        <button class="modal-btn cancel" onclick="showOrders()">Back</button>
+        <button class="modal-btn confirm" onclick="confirmPayment(${order.id})">Confirm Payment</button>
+    `;
+}
+
+function confirmPayment(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    const select = document.getElementById('final-payment-select');
+    
+    if(order && select) {
+        order.paymentMethod = select.value;
+        order.paymentStatus = 'Paid';
+        updateOrderStatus(orderId, 'Completed');
+    }
 }
 
 function updateOrderStatus(id, newStatus) {
@@ -489,6 +555,62 @@ function updateOrderStatus(id, newStatus) {
     }
 
     showOrders();
+}
+
+function printReceipt(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if(!order) return;
+
+    let itemsList = order.items.map(i => `
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <span>${i.name}</span>
+            <span>${i.price.toFixed(2)}</span>
+        </div>
+    `).join('');
+
+    // Calculate Discount for Display
+    let discountRow = '';
+    if(order.rawTotal !== parseFloat(order.finalTotal.replace('₱',''))) {
+        let discountAmt = order.rawTotal - parseFloat(order.finalTotal.replace('₱',''));
+        discountRow = `
+            <div style="display:flex; justify-content:space-between; color:red;">
+                <span>Discount (PWD/Senior)</span>
+                <span>-${discountAmt.toFixed(2)}</span>
+            </div>
+        `;
+    }
+
+    let receiptContent = `
+        <div style="font-family: monospace; padding: 20px; max-width: 300px; margin: 0 auto;">
+            <h2 style="text-align:center; margin:0;">Prado's Kitchenette</h2>
+            <p style="text-align:center; font-size:0.8rem; margin:5px 0;">Official Receipt</p>
+            <hr style="border-top: 1px dashed black;">
+            <p>Order #${order.id}<br>Date: ${order.timestamp}</p>
+            <p>Customer: ${order.customer}</p>
+            <p>Phone: ${order.phone || 'N/A'}<br>Email: ${order.email || 'N/A'}</p>
+            <hr style="border-top: 1px dashed black;">
+            ${itemsList}
+            <hr style="border-top: 1px dashed black;">
+            <div style="display:flex; justify-content:space-between;">
+                <span>Subtotal</span>
+                <span>${order.rawTotal.toFixed(2)}</span>
+            </div>
+            ${discountRow}
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.2rem; margin-top:5px;">
+                <span>TOTAL</span>
+                <span>${order.finalTotal}</span>
+            </div>
+            <p style="text-align:center; margin-top:20px;">Paid via ${order.paymentMethod}</p>
+            <p style="text-align:center; margin-top:10px;">Thank you for dining!</p>
+        </div>
+    `;
+
+    const printWindow = window.open('', '', 'width=400,height=600');
+    printWindow.document.write('<html><head><title>Receipt</title></head><body>');
+    printWindow.document.write(receiptContent);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
 }
 
 // --- MODAL & CHECKOUT ---
@@ -525,6 +647,7 @@ function checkout() {
     const tableNumEl = document.getElementById('table-num');
     const tableStatusEl = document.getElementById('table-status');
     const custNameEl = document.getElementById('cust-name');
+    const discountEl = document.getElementById('discount-toggle');
     const totalEl = document.getElementById('total-price');
 
     if (!tableNumEl || !custNameEl || !totalEl) {
@@ -535,27 +658,16 @@ function checkout() {
     const tableNum = tableNumEl.value;
     const tableStatus = tableStatusEl ? tableStatusEl.value : "Occupied"; 
     const custName = custNameEl.value;
-    const totalText = totalEl.innerText;
+    let rawTotal = parseFloat(totalEl.innerText.replace('₱', ''));
+    
+    // Apply Discount Logic
+    let isDiscounted = discountEl && discountEl.checked;
+    let discountAmount = isDiscounted ? rawTotal * 0.20 : 0;
+    let finalTotal = rawTotal - discountAmount;
+    let finalTotalStr = `₱${finalTotal.toFixed(2)}`;
 
     if(cart.length === 0) return showCustomModal("Cart Empty", "<p>Please add items.</p>", false);
     if(!tableNum || !custName) return showCustomModal("Missing Info", "<p>Enter Table # and Name.</p>", false);
-
-    // Filter Active Payment Methods
-    const activeMethods = paymentMethods.filter(m => m.active);
-    let paymentSelectHTML = '';
-    
-    if(activeMethods.length === 0) {
-         paymentSelectHTML = `<p style="color:red; font-size:0.8rem; margin-top:10px;">No payment methods active!</p>`;
-    } else {
-        paymentSelectHTML = `
-            <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
-                <label style="font-size:0.9rem; font-weight:bold;">Payment Method:</label>
-                <select id="payment-method-select" class="form-input" style="margin-top:5px;">
-                    ${activeMethods.map(m => `<option value="${m.name}">${m.name}</option>`).join('')}
-                </select>
-            </div>
-        `;
-    }
 
     let receiptHTML = `
         <div style="text-align:center; margin-bottom:10px; font-size:0.9rem;">
@@ -575,43 +687,52 @@ function checkout() {
         `;
     });
 
-    // Close the list container
-    receiptHTML += `</div>`;
-    
-    // Append the Payment Dropdown
-    receiptHTML += paymentSelectHTML;
-    
-    // Append the Total
+    if(isDiscounted) {
+        receiptHTML += `
+            <div class="review-item" style="color:var(--primary); font-weight:bold;">
+                <span>PWD/Senior Discount (20%)</span>
+                <span>-₱${discountAmount.toFixed(2)}</span>
+            </div>
+        `;
+    }
+
     receiptHTML += `
+        </div>
         <div class="review-total">
             <span>TOTAL</span>
-            <span>${totalText}</span>
+            <span>${finalTotalStr}</span>
         </div>
+        <p style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">Payment collected AFTER dining.</p>
     `;
 
+    // Pass both totals for history accuracy
     showCustomModal("Review Order", receiptHTML, true, () => {
-        finalizeOrder(custName, tableNum, totalText);
+        finalizeOrder(custName, tableNum, finalTotalStr, rawTotal);
     });
 }
 
-function finalizeOrder(name, table, total) {
-    // 1. Capture Payment Method BEFORE closing modal
-    const paymentSelect = document.getElementById('payment-method-select');
-    const paymentMethod = paymentSelect ? paymentSelect.value : "Unknown/Cash";
+function finalizeOrder(name, table, finalTotal, rawTotal) {
+    const custPhone = document.getElementById('cust-phone').value;
+    const custEmail = document.getElementById('cust-email').value;
 
     const newOrder = {
         id: orderIdCounter++,
         customer: name,
+        phone: custPhone,
+        email: custEmail,
         table: table,
         items: [...cart],
-        total: total,
-        paymentMethod: paymentMethod, // Save it
-        status: 'Pending',
+        rawTotal: rawTotal,
+        finalTotal: finalTotal,
+        paymentMethod: 'Pending',
+        paymentStatus: 'Unpaid', // Start as Unpaid
+        status: 'Pending', // Start as Pending Kitchen Status
         timestamp: new Date().toLocaleString()
     };
     
     allOrders.push(newOrder);
 
+    // Stock deduction
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
@@ -630,8 +751,7 @@ function finalizeOrder(name, table, total) {
             <div style="text-align:center">
                 <p>Order #${newOrder.id} sent to kitchen!</p>
                 <h2 style="color:var(--primary); margin:15px 0;">Table ${table}</h2>
-                <p>Total: ${total}</p>
-                <p style="font-size:0.9rem; color:#666; margin-top:5px; font-weight:bold;">Paid via ${paymentMethod}</p>
+                <p>Total: ${finalTotal}</p>
             </div>
         `, false);
     }, 300);
@@ -640,6 +760,9 @@ function finalizeOrder(name, table, total) {
     renderCart();
     document.getElementById('table-num').value = '';
     document.getElementById('cust-name').value = '';
+    document.getElementById('cust-phone').value = '';
+    document.getElementById('cust-email').value = '';
+    if(document.getElementById('discount-toggle')) document.getElementById('discount-toggle').checked = false;
 }
 
 // Start
