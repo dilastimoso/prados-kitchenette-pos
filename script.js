@@ -160,18 +160,22 @@ const menuData = [
     { id: 1112, name: "Grouted Chicken", price: 160.00, category: "Chicken" }
 ];
 
-// --- INVENTORY DATABASE (Initialized Static 50) ---
+// --- INVENTORY DATABASE ---
 const inventoryData = menuData.map(item => ({
     inventory_id: `INV-${item.id}`,
     menu_id: item.id,
     name: item.name,
-    quantity_on_hand: 50, // Static Default Stock
-    expiration_date: "2026-12-31" // Static Default Exp
+    quantity_on_hand: 50,
+    expiration_date: "2026-12-31"
 }));
+
+// --- ORDERS DATABASE ---
+let allOrders = [];
+let orderIdCounter = 1;
 
 let cart = [];
 
-// --- INITIALIZATION & DISPLAY ---
+// --- INITIALIZATION ---
 
 function initCategories() {
     const categories = ["All", ...new Set(menuData.map(item => item.category))];
@@ -215,7 +219,6 @@ function addToCart(id) {
         return showCustomModal("Out of Stock", `<p>Sorry, <b>${inv.name}</b> is currently unavailable.</p>`, false);
     }
     
-    // Check if adding exceeds stock
     const inCart = cart.filter(i => i.id === id).length;
     if(inCart + 1 > inv.quantity_on_hand) {
         return showCustomModal("Low Stock", `<p>Only ${inv.quantity_on_hand} available.</p>`, false);
@@ -253,7 +256,7 @@ function removeFromCart(index) {
     renderCart();
 }
 
-// --- INVENTORY MANAGEMENT (EDITABLE) ---
+// --- INVENTORY MANAGEMENT ---
 
 function showInventory() {
     let html = `
@@ -283,7 +286,6 @@ function showInventory() {
     
     showCustomModal("Manage Stock", html, false);
     
-    // Inject Save Button
     const actionsEl = document.getElementById('modal-actions');
     actionsEl.innerHTML = `
         <button class="modal-btn cancel" onclick="closeModal()">Close</button>
@@ -302,7 +304,6 @@ function saveInventoryChanges() {
         }
     });
 
-    // Refresh UI
     const activeBtn = document.querySelector('.tab-btn.active');
     const activeTab = activeBtn ? activeBtn.innerText : 'All';
     filterMenu(activeTab);
@@ -311,7 +312,6 @@ function saveInventoryChanges() {
     setTimeout(() => showCustomModal("Success", "<p>Inventory updated successfully.</p>", false), 300);
 }
 
-// Check expirations on load
 function checkExpirations() {
     const today = new Date().toISOString().split('T')[0];
     const expired = inventoryData.filter(i => i.expiration_date <= today);
@@ -326,7 +326,105 @@ function checkExpirations() {
     }
 }
 
-// --- MODAL & CHECKOUT (CRASH PROOF) ---
+// --- ORDER MANAGEMENT (NEW FEATURE) ---
+
+function showOrders() {
+    let pendingHTML = '';
+    let completedHTML = '';
+
+    const pendingOrders = allOrders.filter(o => o.status === 'Pending');
+    const completedOrders = allOrders.filter(o => o.status !== 'Pending').reverse(); // Newest first
+
+    // Build Pending List
+    if(pendingOrders.length === 0) {
+        pendingHTML = '<p style="color:#888; text-align:center; padding:10px;">No pending orders.</p>';
+    } else {
+        pendingOrders.forEach(order => {
+            let itemsList = order.items.map(i => `${i.name}`).join(', ');
+            pendingHTML += `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span>#${order.id} - Table ${order.table}</span>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="order-details">
+                        <b>${order.customer}</b><br>
+                        Items: ${itemsList}<br>
+                        Total: ${order.total}
+                    </div>
+                    <div class="order-actions">
+                        <button class="action-btn btn-cancel" onclick="updateOrderStatus(${order.id}, 'Cancelled')">Cancel</button>
+                        <button class="action-btn btn-complete" onclick="updateOrderStatus(${order.id}, 'Completed')">Complete</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // Build History List
+    if(completedOrders.length === 0) {
+        completedHTML = '<p style="color:#888; text-align:center; padding:10px;">No history.</p>';
+    } else {
+        completedOrders.forEach(order => {
+            let statusClass = order.status === 'Completed' ? 'status-completed' : 'status-cancelled';
+            let itemsList = order.items.map(i => `${i.name}`).join(', ');
+            completedHTML += `
+                <div class="order-card" style="opacity:0.8; background:#f9f9f9;">
+                    <div class="order-header">
+                        <span>#${order.id} - Table ${order.table}</span>
+                        <span class="status-badge ${statusClass}">${order.status}</span>
+                    </div>
+                    <div class="order-details">
+                        <b>${order.customer}</b><br>
+                        ${itemsList}<br>
+                        ${order.total}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    let fullHTML = `
+        <h4 style="margin-bottom:10px; color:var(--primary);">Active Kitchen Orders</h4>
+        <div style="margin-bottom:20px;">${pendingHTML}</div>
+        <h4 style="margin-bottom:10px; color:#666; border-top:1px solid #ddd; padding-top:10px;">Order History</h4>
+        <div style="max-height:200px; overflow-y:auto;">${completedHTML}</div>
+    `;
+
+    showCustomModal("Orders", fullHTML, false);
+    
+    // Add a simple Close button
+    document.getElementById('modal-actions').innerHTML = `
+        <button class="modal-btn only-ok" onclick="closeModal()">Close</button>
+    `;
+}
+
+function updateOrderStatus(id, newStatus) {
+    const order = allOrders.find(o => o.id === id);
+    if (!order) return;
+
+    order.status = newStatus;
+
+    if (newStatus === 'Cancelled') {
+        // Return items to stock
+        order.items.forEach(orderItem => {
+            const invItem = inventoryData.find(i => i.menu_id === orderItem.id);
+            if (invItem) {
+                invItem.quantity_on_hand += 1;
+            }
+        });
+        
+        // Refresh Stock View if open
+        const activeBtn = document.querySelector('.tab-btn.active');
+        const activeTab = activeBtn ? activeBtn.innerText : 'All';
+        filterMenu(activeTab);
+    }
+
+    // Re-render the orders modal to show changes immediately
+    showOrders();
+}
+
+// --- MODAL & CHECKOUT ---
 
 function showCustomModal(title, htmlContent, isConfirmType, callback) {
     const modal = document.getElementById('custom-modal');
@@ -356,9 +454,7 @@ function closeModal() {
     document.getElementById('custom-modal').classList.remove('active');
 }
 
-// SAFE CHECKOUT FUNCTION
 function checkout() {
-    // Safety checks for missing elements
     const tableNumEl = document.getElementById('table-num');
     const tableStatusEl = document.getElementById('table-status');
     const custNameEl = document.getElementById('cust-name');
@@ -370,7 +466,6 @@ function checkout() {
     }
 
     const tableNum = tableNumEl.value;
-    // Fallback if tableStatus is missing in HTML
     const tableStatus = tableStatusEl ? tableStatusEl.value : "Occupied"; 
     const custName = custNameEl.value;
     const totalText = totalEl.innerText;
@@ -409,7 +504,21 @@ function checkout() {
 }
 
 function finalizeOrder(name, table, total) {
-    // 1. Deduct Stock
+    // 1. Create Order Object
+    const newOrder = {
+        id: orderIdCounter++,
+        customer: name,
+        table: table,
+        items: [...cart], // Copy cart
+        total: total,
+        status: 'Pending',
+        timestamp: new Date().toLocaleString()
+    };
+    
+    // 2. Add to Orders Array
+    allOrders.push(newOrder);
+
+    // 3. Deduct Stock
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
@@ -419,7 +528,6 @@ function finalizeOrder(name, table, total) {
 
     closeModal();
     
-    // Refresh Grid
     const activeBtn = document.querySelector('.tab-btn.active');
     const activeTab = activeBtn ? activeBtn.innerText : 'All';
     filterMenu(activeTab);
@@ -427,7 +535,7 @@ function finalizeOrder(name, table, total) {
     setTimeout(() => {
         showCustomModal("Order Placed!", `
             <div style="text-align:center">
-                <p>Order sent to kitchen!</p>
+                <p>Order #${newOrder.id} sent to kitchen!</p>
                 <h2 style="color:var(--primary); margin:15px 0;">Table ${table}</h2>
                 <p>Total: ${total}</p>
             </div>
