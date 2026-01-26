@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Prado's Kitchenette POS</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -12,15 +12,22 @@
         <header class="top-bar">
             <div class="logo-section">
                 <img src="logo.jpg" alt="Prado's Logo" class="logo">
-                <h1>Prado's <span>Kitchenette</span></h1>
-            </div>
-            <div class="category-tabs" id="category-tabs">
+                <div class="brand-text">
+                    <h1>Prado's <span>Kitchenette</span></h1>
                 </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="icon-btn" onclick="showInventory()" title="Manage Stock">
+                    📦 Manage Stock
+                </button>
+            </div>
+
+            <div class="category-tabs" id="category-tabs"></div>
         </header>
 
         <main class="main-content">
-            <section class="menu-grid" id="menu-grid">
-                </section>
+            <section class="menu-grid" id="menu-grid"></section>
 
             <aside class="order-sidebar">
                 <div class="sidebar-header">
@@ -28,13 +35,18 @@
                 </div>
                 
                 <div class="customer-info">
-                    <input type="text" id="table-num" class="form-input" placeholder="Table Number" required>
+                    <div class="input-group">
+                        <input type="number" id="table-num" class="form-input" placeholder="Table #" required>
+                        <select id="table-status" class="form-input">
+                            <option value="Occupied">Occupied</option>
+                            <option value="Reserved">Reserved</option>
+                        </select>
+                    </div>
                     <input type="text" id="cust-name" class="form-input" placeholder="Customer Name" required>
-                    <input type="text" id="cust-phone" class="form-input" placeholder="Phone Number (Optional)">
                 </div>
 
                 <div class="cart-items" id="cart-items">
-                    <p class="empty-msg" style="text-align:center; opacity:0.6; margin-top:20px;">Cart is empty</p>
+                    <p class="empty-msg">Cart is empty</p>
                 </div>
 
                 <div class="order-footer">
@@ -51,10 +63,8 @@
     <div id="custom-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modal-title">Title</h3>
-            <div id="modal-content" class="modal-body">
-                </div>
-            <div class="modal-actions" id="modal-actions">
-                </div>
+            <div id="modal-content" class="modal-body"></div>
+            <div class="modal-actions" id="modal-actions"></div>
         </div>
     </div>
 
