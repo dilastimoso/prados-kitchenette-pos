@@ -1,4 +1,6 @@
-// FULL MENU DATABASE FROM IMAGES
+// --- DATABASE (Based on ERD Entities) ---
+
+// 1. MENU_ITEM Table
 const menuData = [
     // RICE TOPPINGS
     { id: 101, name: "Chicken", price: 68.00, category: "Rice Toppings" },
@@ -78,7 +80,7 @@ const menuData = [
     { id: 311, name: "Canton Con", price: 160.00, category: "Noodles" },
     { id: 312, name: "Pancit Con Chopsuey", price: 160.00, category: "Noodles" },
     { id: 313, name: "Sotanghon Con", price: 160.00, category: "Noodles" },
-    
+
     // SEAFOODS
     { id: 401, name: "Adobong Hipon", price: 200.00, category: "Seafoods" },
     { id: 402, name: "Shrimp Omelette", price: 80.00, category: "Seafoods" },
@@ -127,7 +129,7 @@ const menuData = [
     { id: 802, name: "Pinakbet", price: 140.00, category: "Vegetables" },
     { id: 803, name: "Samsi", price: 120.00, category: "Vegetables" },
     { id: 804, name: "Tortang Talong", price: 30.00, category: "Vegetables" },
-    
+
     // RICE
     { id: 901, name: "Plain Cup of Rice", price: 15.00, category: "Rice" },
     { id: 902, name: "Garlic Rice", price: 50.00, category: "Rice" },
@@ -170,7 +172,28 @@ const menuData = [
     { id: 1112, name: "Grouted Chicken", price: 160.00, category: "Chicken" }
 ];
 
+// 2. INVENTORY Table (Simulated based on ERD)
+// Fields: inventory_id, menu_id, quality_on_hand, expiration_date
+const inventoryData = menuData.map(item => ({
+    inventory_id: `INV-${item.id}`,
+    menu_id: item.id,
+    name: item.name,
+    quantity_on_hand: Math.floor(Math.random() * 20) + 1, // Random stock 1-20
+    expiration_date: getRandomDate() // Simulated Expiration
+}));
+
+// Helper for random date (Some today, some future)
+function getRandomDate() {
+    const today = new Date();
+    const daysToAdd = Math.floor(Math.random() * 10) - 2; // -2 means expired 2 days ago
+    const date = new Date(today);
+    date.setDate(date.getDate() + daysToAdd);
+    return date.toISOString().split('T')[0];
+}
+
 let cart = [];
+
+// --- LOGIC ---
 
 function initCategories() {
     const categories = ["All", ...new Set(menuData.map(item => item.category))];
@@ -182,12 +205,19 @@ function initCategories() {
 
 function displayMenu(items) {
     const grid = document.getElementById('menu-grid');
-    grid.innerHTML = items.map(item => `
+    grid.innerHTML = items.map(item => {
+        const inv = inventoryData.find(i => i.menu_id === item.id);
+        const stock = inv ? inv.quantity_on_hand : 0;
+        
+        return `
         <div class="menu-card" onclick="addToCart(${item.id})">
-            <h3>${item.name}</h3>
-            <p class="price">₱${item.price.toFixed(2)}</p>
+            <div>
+                <h3>${item.name}</h3>
+                <p class="price">₱${item.price.toFixed(2)}</p>
+            </div>
+            <span class="stock-badge ${stock < 5 ? 'low' : ''}">Stock: ${stock}</span>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 function filterMenu(category) {
@@ -200,6 +230,17 @@ function filterMenu(category) {
 }
 
 function addToCart(id) {
+    const inv = inventoryData.find(i => i.menu_id === id);
+    if(inv.quantity_on_hand <= 0) {
+        return showCustomModal("Out of Stock", `<p>Sorry, <b>${inv.name}</b> is currently unavailable.</p>`, false);
+    }
+    
+    // Check if adding exceeds stock
+    const inCart = cart.filter(i => i.id === id).length;
+    if(inCart + 1 > inv.quantity_on_hand) {
+        return showCustomModal("Low Stock", `<p>Only ${inv.quantity_on_hand} available.</p>`, false);
+    }
+
     const item = menuData.find(i => i.id === id);
     cart.push(item);
     renderCart();
@@ -210,7 +251,7 @@ function renderCart() {
     const totalDisplay = document.getElementById('total-price');
     
     if (cart.length === 0) {
-        cartContainer.innerHTML = '<p class="empty-msg" style="text-align:center; opacity:0.6; margin-top:20px;">Cart is empty</p>';
+        cartContainer.innerHTML = '<p class="empty-msg">Cart is empty</p>';
         totalDisplay.innerText = '₱0.00';
         return;
     }
@@ -232,7 +273,36 @@ function removeFromCart(index) {
     renderCart();
 }
 
-// --- NEW MODAL & CHECKOUT LOGIC (REPLACES ALERT) ---
+// --- INVENTORY ALERT LOGIC ---
+function checkExpirations() {
+    const today = new Date().toISOString().split('T')[0];
+    const expired = inventoryData.filter(i => i.expiration_date <= today);
+    
+    if(expired.length > 0) {
+        let html = `<p>The following items have expired or expire today:</p><ul style="text-align:left; margin-top:10px;">`;
+        expired.forEach(item => {
+            html += `<li style="color:red; margin-bottom:5px;"><b>${item.name}</b> (Exp: ${item.expiration_date})</li>`;
+        });
+        html += `</ul>`;
+        setTimeout(() => showCustomModal("⚠️ Inventory Alert", html, false), 1000);
+    }
+}
+
+function showInventory() {
+    let html = `<div style="max-height:300px; overflow-y:auto;">`;
+    inventoryData.forEach(item => {
+        html += `
+            <div class="inv-row">
+                <span>${item.name}</span>
+                <span style="font-weight:bold;">Qty: ${item.quantity_on_hand}</span>
+            </div>
+        `;
+    });
+    html += `</div>`;
+    showCustomModal("Current Stock", html, false);
+}
+
+// --- MODAL & CHECKOUT ---
 
 function showCustomModal(title, htmlContent, isConfirmType, callback) {
     const modal = document.getElementById('custom-modal');
@@ -244,14 +314,12 @@ function showCustomModal(title, htmlContent, isConfirmType, callback) {
     contentEl.innerHTML = htmlContent;
 
     if (isConfirmType) {
-        // Show Cancel and Confirm buttons
         actionsEl.innerHTML = `
             <button class="modal-btn cancel" onclick="closeModal()">Edit</button>
             <button class="modal-btn confirm" id="dynamic-confirm-btn">Confirm Order</button>
         `;
         document.getElementById('dynamic-confirm-btn').onclick = callback;
     } else {
-        // Show only OK button for errors/alerts
         actionsEl.innerHTML = `
             <button class="modal-btn only-ok" onclick="closeModal()">Okay</button>
         `;
@@ -264,26 +332,18 @@ function closeModal() {
     document.getElementById('custom-modal').classList.remove('active');
 }
 
-// 1. Validation & Review Modal
 function checkout() {
     const tableNum = document.getElementById('table-num').value;
+    const tableStatus = document.getElementById('table-status').value;
     const custName = document.getElementById('cust-name').value;
-    const custPhone = document.getElementById('cust-phone').value;
     const totalText = document.getElementById('total-price').innerText;
 
-    // Error Modal
-    if(cart.length === 0) {
-        return showCustomModal("Cart Empty", "<p style='text-align:center'>Please add items to the cart first.</p>", false);
-    }
-    // Error Modal
-    if(!tableNum || !custName) {
-        return showCustomModal("Missing Details", "<p style='text-align:center'>Please enter <b>Table Number</b> and <b>Customer Name</b>.</p>", false);
-    }
+    if(cart.length === 0) return showCustomModal("Cart Empty", "<p>Please add items.</p>", false);
+    if(!tableNum || !custName) return showCustomModal("Missing Info", "<p>Enter Table # and Name.</p>", false);
 
-    // Build Receipt HTML
     let receiptHTML = `
-        <div style="text-align:center; margin-bottom:10px; font-size:0.95rem;">
-            <p><strong>Table:</strong> ${tableNum}</p>
+        <div style="text-align:center; margin-bottom:10px; font-size:0.9rem;">
+            <p><strong>Table:</strong> ${tableNum} (${tableStatus})</p>
             <p><strong>Customer:</strong> ${custName}</p>
         </div>
         <div class="review-list">
@@ -306,46 +366,44 @@ function checkout() {
         </div>
     `;
 
-    // Show Review Modal (Confirm Type = true)
     showCustomModal("Review Order", receiptHTML, true, () => {
-        finalizeOrder(custName, tableNum, custPhone, totalText);
+        finalizeOrder(custName, tableNum, totalText);
     });
 }
 
-// 2. Final Success Modal
-function finalizeOrder(name, table, phone, total) {
-    const orderDetails = {
-        customer: name,
-        table: table,
-        phone: phone,
-        items: cart,
-        total: total,
-        date: new Date().toLocaleString()
-    };
+function finalizeOrder(name, table, total) {
+    // 1. Deduct Stock (STOCK_TRANSACTION Logic)
+    cart.forEach(cartItem => {
+        const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
+        if(invItem) {
+            invItem.quantity_on_hand -= 1; // Deduct 1 per instance
+        }
+    });
 
-    console.log("Order Finalized:", orderDetails);
-    
-    // Close Review Modal
+    // 2. Clear & Success
     closeModal();
+    
+    // Refresh Grid to show new stock
+    const activeTab = document.querySelector('.tab-btn.active').innerText;
+    filterMenu(activeTab);
 
-    // Show Success Modal
     setTimeout(() => {
         showCustomModal("Order Placed!", `
             <div style="text-align:center">
                 <p>Order sent to kitchen!</p>
                 <h2 style="color:var(--primary); margin:15px 0;">Table ${table}</h2>
-                <p>Thank you, ${name}</p>
+                <p>Total: ${total}</p>
             </div>
         `, false);
     }, 300);
     
-    // Reset Cart
     cart = [];
     renderCart();
     document.getElementById('table-num').value = '';
     document.getElementById('cust-name').value = '';
-    document.getElementById('cust-phone').value = '';
 }
 
+// Initialize
 initCategories();
 displayMenu(menuData);
+checkExpirations(); // Run alert on load
