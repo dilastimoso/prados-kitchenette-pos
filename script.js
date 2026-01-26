@@ -172,24 +172,15 @@ const menuData = [
     { id: 1112, name: "Grouted Chicken", price: 160.00, category: "Chicken" }
 ];
 
-// 2. INVENTORY Table (Simulated based on ERD)
-// Fields: inventory_id, menu_id, quality_on_hand, expiration_date
+// 2. INVENTORY Table (Static Initialization)
+// NO MORE RANDOM SIMULATION
 const inventoryData = menuData.map(item => ({
     inventory_id: `INV-${item.id}`,
     menu_id: item.id,
     name: item.name,
-    quantity_on_hand: Math.floor(Math.random() * 20) + 1, // Random stock 1-20
-    expiration_date: getRandomDate() // Simulated Expiration
+    quantity_on_hand: 50, // Static default
+    expiration_date: "2026-12-31" // Static default
 }));
-
-// Helper for random date (Some today, some future)
-function getRandomDate() {
-    const today = new Date();
-    const daysToAdd = Math.floor(Math.random() * 10) - 2; // -2 means expired 2 days ago
-    const date = new Date(today);
-    date.setDate(date.getDate() + daysToAdd);
-    return date.toISOString().split('T')[0];
-}
 
 let cart = [];
 
@@ -235,7 +226,6 @@ function addToCart(id) {
         return showCustomModal("Out of Stock", `<p>Sorry, <b>${inv.name}</b> is currently unavailable.</p>`, false);
     }
     
-    // Check if adding exceeds stock
     const inCart = cart.filter(i => i.id === id).length;
     if(inCart + 1 > inv.quantity_on_hand) {
         return showCustomModal("Low Stock", `<p>Only ${inv.quantity_on_hand} available.</p>`, false);
@@ -273,13 +263,73 @@ function removeFromCart(index) {
     renderCart();
 }
 
-// --- INVENTORY ALERT LOGIC ---
+// --- INVENTORY MANAGEMENT (SET EXPIRATION) ---
+
+// Show Interactive Inventory Table
+function showInventory() {
+    let html = `
+        <div style="max-height:300px; overflow-y:auto; padding-right:5px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead>
+                    <tr style="text-align:left; border-bottom:2px solid #ddd;">
+                        <th>Item</th>
+                        <th style="width:50px">Qty</th>
+                        <th>Exp Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    inventoryData.forEach(item => {
+        html += `
+            <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:8px 0;">${item.name}</td>
+                <td><input type="number" id="qty-${item.menu_id}" value="${item.quantity_on_hand}" style="width:50px; padding:5px; border:1px solid #ccc; border-radius:5px;"></td>
+                <td><input type="date" id="date-${item.menu_id}" value="${item.expiration_date}" style="padding:5px; border:1px solid #ccc; border-radius:5px;"></td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table></div>`;
+    
+    // Show Modal with "Save Changes" button
+    showCustomModal("Manage Stock", html, false);
+    
+    // Add Save Button Manually
+    const actionsEl = document.getElementById('modal-actions');
+    actionsEl.innerHTML = `
+        <button class="modal-btn cancel" onclick="closeModal()">Close</button>
+        <button class="modal-btn confirm" onclick="saveInventoryChanges()">Save Changes</button>
+    `;
+}
+
+function saveInventoryChanges() {
+    // Loop through inputs and update data
+    inventoryData.forEach(item => {
+        const qtyInput = document.getElementById(`qty-${item.menu_id}`);
+        const dateInput = document.getElementById(`date-${item.menu_id}`);
+        
+        if(qtyInput && dateInput) {
+            item.quantity_on_hand = parseInt(qtyInput.value) || 0;
+            item.expiration_date = dateInput.value;
+        }
+    });
+
+    // Refresh UI
+    const activeTab = document.querySelector('.tab-btn.active').innerText;
+    filterMenu(activeTab);
+    
+    closeModal();
+    setTimeout(() => showCustomModal("Success", "<p>Inventory updated successfully.</p>", false), 300);
+}
+
+// Run expiration check on load (Alert if needed)
 function checkExpirations() {
     const today = new Date().toISOString().split('T')[0];
     const expired = inventoryData.filter(i => i.expiration_date <= today);
     
     if(expired.length > 0) {
-        let html = `<p>The following items have expired or expire today:</p><ul style="text-align:left; margin-top:10px;">`;
+        let html = `<p>The following items have expired:</p><ul style="text-align:left; margin-top:10px;">`;
         expired.forEach(item => {
             html += `<li style="color:red; margin-bottom:5px;"><b>${item.name}</b> (Exp: ${item.expiration_date})</li>`;
         });
@@ -288,19 +338,6 @@ function checkExpirations() {
     }
 }
 
-function showInventory() {
-    let html = `<div style="max-height:300px; overflow-y:auto;">`;
-    inventoryData.forEach(item => {
-        html += `
-            <div class="inv-row">
-                <span>${item.name}</span>
-                <span style="font-weight:bold;">Qty: ${item.quantity_on_hand}</span>
-            </div>
-        `;
-    });
-    html += `</div>`;
-    showCustomModal("Current Stock", html, false);
-}
 
 // --- MODAL & CHECKOUT ---
 
@@ -332,6 +369,7 @@ function closeModal() {
     document.getElementById('custom-modal').classList.remove('active');
 }
 
+// FIXED CHECKOUT FUNCTION
 function checkout() {
     const tableNum = document.getElementById('table-num').value;
     const tableStatus = document.getElementById('table-status').value;
@@ -372,18 +410,17 @@ function checkout() {
 }
 
 function finalizeOrder(name, table, total) {
-    // 1. Deduct Stock (STOCK_TRANSACTION Logic)
+    // 1. Deduct Stock
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
-            invItem.quantity_on_hand -= 1; // Deduct 1 per instance
+            invItem.quantity_on_hand -= 1;
         }
     });
 
-    // 2. Clear & Success
     closeModal();
     
-    // Refresh Grid to show new stock
+    // Refresh Grid
     const activeTab = document.querySelector('.tab-btn.active').innerText;
     filterMenu(activeTab);
 
@@ -406,4 +443,4 @@ function finalizeOrder(name, table, total) {
 // Initialize
 initCategories();
 displayMenu(menuData);
-checkExpirations(); // Run alert on load
+checkExpirations();
