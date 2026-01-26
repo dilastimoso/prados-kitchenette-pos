@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prado's Kitchenette POS</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="pos-container">
@@ -14,13 +14,8 @@
                 <img src="logo.jpg" alt="Prado's Logo" class="logo">
                 <h1>Prado's <span>Kitchenette</span></h1>
             </div>
-            <div class="category-tabs">
-                <button class="tab-btn active" onclick="filterMenu('all')">All</button>
-                <button class="tab-btn" onclick="filterMenu('Pork')">Pork</button>
-                <button class="tab-btn" onclick="filterMenu('Chicken')">Chicken</button>
-                <button class="tab-btn" onclick="filterMenu('Seafoods')">Seafood</button>
-                <button class="tab-btn" onclick="filterMenu('Rice Toppings')">Rice Toppings</button>
-            </div>
+            <div class="category-tabs" id="category-tabs">
+                </div>
         </header>
 
         <main class="main-content">
@@ -28,16 +23,26 @@
                 </section>
 
             <aside class="order-sidebar">
-                <h2>Current Order</h2>
-                <div class="cart-items" id="cart-items">
-                    <p class="empty-msg">Your cart is empty</p>
+                <div class="sidebar-header">
+                    <h2>Current Order</h2>
                 </div>
+                
+                <div class="customer-info">
+                    <input type="text" id="table-num" class="form-input" placeholder="Table Number" required>
+                    <input type="text" id="cust-name" class="form-input" placeholder="Customer Name" required>
+                    <input type="text" id="cust-phone" class="form-input" placeholder="Phone Number (Optional)">
+                </div>
+
+                <div class="cart-items" id="cart-items">
+                    <p class="empty-msg" style="text-align:center; opacity:0.6; margin-top:20px;">Cart is empty</p>
+                </div>
+
                 <div class="order-footer">
                     <div class="total-row">
                         <span>Total</span>
                         <span id="total-price">₱0.00</span>
                     </div>
-                    <button class="checkout-btn" onclick="checkout()">Place Order</button>
+                    <button class="checkout-btn" onclick="checkout()">Submit Order</button>
                 </div>
             </aside>
         </main>
