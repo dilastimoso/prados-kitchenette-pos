@@ -144,6 +144,22 @@ body {
     font-size: 0.9rem;
 }
 
+/* REQUEST INPUT STYLES */
+.request-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background: rgba(255, 255, 255, 0.8);
+    min-height: 80px;
+    margin-top: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    resize: none;
+    outline: none;
+}
+.request-input:focus { border-color: var(--primary); background: #fff; }
+
 .cart-items { flex: 1; overflow-y: auto; margin: 10px 0; border-top: 1px solid rgba(0,0,0,0.05); }
 .empty-msg { text-align: center; opacity: 0.6; margin-top: 20px; font-size: 0.9rem; }
 
@@ -156,6 +172,14 @@ body {
     border-radius: 8px;
     font-size: 0.85rem;
     align-items: center;
+}
+.item-note {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-style: italic;
+    margin-top: 2px;
+    font-weight: 600;
 }
 
 .order-footer { border-top: 1px solid rgba(0,0,0,0.1); padding-top: 10px; }
