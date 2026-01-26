@@ -226,16 +226,22 @@ input:checked + .slider:before { transform: translateX(16px); }
 }
 .order-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; color: var(--primary); }
 .order-details { font-size: 0.85rem; color: #444; margin-bottom: 10px; line-height: 1.4; }
-.order-actions { display: flex; gap: 8px; }
+.order-actions { display: flex; gap: 8px; margin-top: 10px; }
 
-.status-badge { padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; }
-.status-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+/* Status Badges */
+.status-badge { padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+.status-pending { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+.status-preparing { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.status-cooking { background: #ffe5d0; color: #fd7e14; border: 1px solid #ffdec0; }
+.status-served { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
 .status-completed { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 .status-cancelled { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-.action-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-.btn-complete { background: var(--primary); color: white; }
+.action-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition:0.2s; }
+.btn-progress { background: linear-gradient(145deg, var(--primary), #1b4d36); color: white; }
+.btn-progress:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
 .btn-cancel { background: #eee; color: var(--accent); }
+.btn-print { background: #333; color: white; margin-left: 5px;}
 
 /* --- MOBILE FIXES --- */
 @media (max-width: 900px) {
@@ -299,3 +305,27 @@ input:checked + .slider:before { transform: translateX(16px); }
 .modal-btn.cancel { background: #eee; color: #555; }
 .modal-btn.confirm { background: var(--primary); color: white; }
 .modal-btn.only-ok { background: var(--primary); color: white; width: 100%; }
+
+/* --- PRINT STYLES --- */
+@media print {
+    body { background: white; color: black; height: auto; overflow: visible; }
+    .pos-container, .modal-actions, .icon-btn, .checkout-btn { display: none !important; }
+    .modal-overlay { 
+        position: static; 
+        background: white; 
+        backdrop-filter: none; 
+        opacity: 1; 
+        visibility: visible; 
+        display: block; 
+    }
+    .modal-box { 
+        box-shadow: none; 
+        border: none; 
+        width: 100%; 
+        max-width: 100%; 
+        transform: none; 
+        padding: 0;
+    }
+    .modal-body { max-height: none; overflow: visible; }
+    .status-badge, .action-btn { display: none; }
+}
