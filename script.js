@@ -169,7 +169,7 @@ const inventoryData = menuData.map(item => ({
     expiration_date: "2026-12-31"
 }));
 
-// --- PAYMENT METHODS (NEW) ---
+// --- PAYMENT METHODS ---
 let paymentMethods = [
     { id: 'cash', name: 'Cash', active: true },
     { id: 'gcash', name: 'GCash', active: true },
@@ -219,7 +219,7 @@ function filterMenu(category) {
     });
 }
 
-// --- CART LOGIC WITH REQUEST BOX ---
+// --- CART LOGIC ---
 
 function addToCart(id) {
     const inv = inventoryData.find(i => i.menu_id === id);
@@ -290,7 +290,7 @@ function removeFromCart(index) {
     renderCart();
 }
 
-// --- PAYMENT SETTINGS (NEW) ---
+// --- PAYMENT SETTINGS ---
 
 function showPaymentSettings() {
     let html = `<div style="text-align:left;">`;
@@ -321,7 +321,6 @@ function togglePaymentMethod(id) {
     const method = paymentMethods.find(m => m.id === id);
     if(method) method.active = !method.active;
 }
-
 
 // --- INVENTORY MANAGEMENT ---
 
@@ -410,6 +409,7 @@ function showOrders() {
                 return i.notes ? `${i.name} <i>(${i.notes})</i>` : i.name;
             }).join(', ');
 
+            // Display Payment Method in Pending too
             pendingHTML += `
                 <div class="order-card">
                     <div class="order-header">
@@ -419,7 +419,8 @@ function showOrders() {
                     <div class="order-details">
                         <b>${order.customer}</b><br>
                         ${itemsList}<br>
-                        Total: ${order.total}
+                        Total: ${order.total}<br>
+                        <span style="font-size:0.8rem; color:#666;">Pay via: ${order.paymentMethod}</span>
                     </div>
                     <div class="order-actions">
                         <button class="action-btn btn-cancel" onclick="updateOrderStatus(${order.id}, 'Cancelled')">Cancel</button>
@@ -436,7 +437,8 @@ function showOrders() {
         completedOrders.forEach(order => {
             let statusClass = order.status === 'Completed' ? 'status-completed' : 'status-cancelled';
             let itemsList = order.items.map(i => i.name).join(', ');
-            // Added Payment method to history display
+            
+            // Display Payment Method in History
             completedHTML += `
                 <div class="order-card" style="opacity:0.8; background:#f9f9f9;">
                     <div class="order-header">
@@ -543,7 +545,7 @@ function checkout() {
     let paymentSelectHTML = '';
     
     if(activeMethods.length === 0) {
-         paymentSelectHTML = `<p style="color:red; font-size:0.8rem;">No payment methods active!</p>`;
+         paymentSelectHTML = `<p style="color:red; font-size:0.8rem; margin-top:10px;">No payment methods active!</p>`;
     } else {
         paymentSelectHTML = `
             <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
@@ -573,9 +575,14 @@ function checkout() {
         `;
     });
 
+    // Close the list container
+    receiptHTML += `</div>`;
+    
+    // Append the Payment Dropdown
+    receiptHTML += paymentSelectHTML;
+    
+    // Append the Total
     receiptHTML += `
-        </div>
-        ${paymentSelectHTML}
         <div class="review-total">
             <span>TOTAL</span>
             <span>${totalText}</span>
@@ -588,9 +595,9 @@ function checkout() {
 }
 
 function finalizeOrder(name, table, total) {
-    // Get Selected Payment Method
+    // 1. Capture Payment Method BEFORE closing modal
     const paymentSelect = document.getElementById('payment-method-select');
-    const paymentMethod = paymentSelect ? paymentSelect.value : "Unknown";
+    const paymentMethod = paymentSelect ? paymentSelect.value : "Unknown/Cash";
 
     const newOrder = {
         id: orderIdCounter++,
@@ -598,7 +605,7 @@ function finalizeOrder(name, table, total) {
         table: table,
         items: [...cart],
         total: total,
-        paymentMethod: paymentMethod, // Store it
+        paymentMethod: paymentMethod, // Save it
         status: 'Pending',
         timestamp: new Date().toLocaleString()
     };
@@ -624,7 +631,7 @@ function finalizeOrder(name, table, total) {
                 <p>Order #${newOrder.id} sent to kitchen!</p>
                 <h2 style="color:var(--primary); margin:15px 0;">Table ${table}</h2>
                 <p>Total: ${total}</p>
-                <p style="font-size:0.9rem; color:#666; margin-top:5px;">Paid via ${paymentMethod}</p>
+                <p style="font-size:0.9rem; color:#666; margin-top:5px; font-weight:bold;">Paid via ${paymentMethod}</p>
             </div>
         `, false);
     }, 300);
