@@ -435,7 +435,7 @@ function showOrders() {
                     <div class="order-details">
                         <b>${order.customer}</b><br>
                         ${itemsList}<br>
-                        Total: <b>${order.finalTotal}</b>
+                        Total: <b>${order.finalTotal || order.rawTotal}</b>
                     </div>
                     <div class="order-actions">
                         <button class="action-btn btn-cancel" onclick="updateOrderStatus(${order.id}, 'Cancelled')">Cancel</button>
@@ -465,7 +465,7 @@ function showOrders() {
                     <div class="order-details">
                         <b>${order.customer}</b><br>
                         ${itemsList}<br>
-                        <b>${order.finalTotal}</b> ${payInfo}
+                        <b>${order.finalTotal || order.rawTotal}</b> ${payInfo}
                     </div>
                     ${printBtn}
                 </div>
@@ -487,7 +487,7 @@ function showOrders() {
     `;
 }
 
-// Open Modal to Collect Payment
+// --- NEW PAYMENT MODAL with Discount Toggle ---
 function openPaymentModal(orderId) {
     const order = allOrders.find(o => o.id === orderId);
     if(!order) return;
@@ -508,10 +508,22 @@ function openPaymentModal(orderId) {
         `;
     }
 
+    let baseAmount = order.rawTotal || parseFloat(order.total.replace('₱',''));
+    let defaultTotal = order.finalTotal || order.total;
+
     let html = `
         <div style="text-align:center;">
             <p>Total Amount Due</p>
-            <h2 style="color:var(--accent); font-size:2rem; margin:10px 0;">${order.finalTotal}</h2>
+            <h2 id="modal-total-display" style="color:var(--accent); font-size:2rem; margin:10px 0;">${defaultTotal}</h2>
+            
+            <div class="payment-row" style="border-top:1px solid #eee; border-bottom:1px solid #eee; padding:10px 0; margin-bottom:10px;">
+                <span style="font-size:0.9rem; font-weight:bold; color:var(--primary);">PWD/Senior Discount (20%)</span>
+                <label class="switch">
+                    <input type="checkbox" id="modal-discount-toggle" onchange="recalculateModalTotal(${baseAmount})">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
             ${paymentSelectHTML}
         </div>
     `;
@@ -524,13 +536,28 @@ function openPaymentModal(orderId) {
     `;
 }
 
+function recalculateModalTotal(baseAmount) {
+    const toggle = document.getElementById('modal-discount-toggle');
+    const display = document.getElementById('modal-total-display');
+    
+    if(toggle && display) {
+        let finalAmt = baseAmount;
+        if(toggle.checked) {
+            finalAmt = baseAmount * 0.8; // 20% off
+        }
+        display.innerText = `₱${finalAmt.toFixed(2)}`;
+    }
+}
+
 function confirmPayment(orderId) {
     const order = allOrders.find(o => o.id === orderId);
     const select = document.getElementById('final-payment-select');
+    const display = document.getElementById('modal-total-display');
     
-    if(order && select) {
+    if(order && select && display) {
         order.paymentMethod = select.value;
         order.paymentStatus = 'Paid';
+        order.finalTotal = display.innerText; // Save the (potentially discounted) total
         updateOrderStatus(orderId, 'Completed');
     }
 }
@@ -568,10 +595,13 @@ function printReceipt(orderId) {
         </div>
     `).join('');
 
-    // Calculate Discount for Display
+    // Logic to detect if discount was applied
     let discountRow = '';
-    if(order.rawTotal !== parseFloat(order.finalTotal.replace('₱',''))) {
-        let discountAmt = order.rawTotal - parseFloat(order.finalTotal.replace('₱',''));
+    let numericFinal = parseFloat(order.finalTotal.replace('₱',''));
+    let numericRaw = order.rawTotal;
+
+    if(numericRaw > numericFinal) {
+        let discountAmt = numericRaw - numericFinal;
         discountRow = `
             <div style="display:flex; justify-content:space-between; color:red;">
                 <span>Discount (PWD/Senior)</span>
@@ -660,7 +690,8 @@ function checkout() {
     const custName = custNameEl.value;
     let rawTotal = parseFloat(totalEl.innerText.replace('₱', ''));
     
-    // Apply Discount Logic
+    // Initial check - payment happens LATER, so we just show estimated total
+    // But we capture if the discount toggle was PRE-set (optional, mostly done at payment)
     let isDiscounted = discountEl && discountEl.checked;
     let discountAmount = isDiscounted ? rawTotal * 0.20 : 0;
     let finalTotal = rawTotal - discountAmount;
@@ -687,6 +718,7 @@ function checkout() {
         `;
     });
 
+    // If pre-toggled
     if(isDiscounted) {
         receiptHTML += `
             <div class="review-item" style="color:var(--primary); font-weight:bold;">
@@ -705,7 +737,6 @@ function checkout() {
         <p style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">Payment collected AFTER dining.</p>
     `;
 
-    // Pass both totals for history accuracy
     showCustomModal("Review Order", receiptHTML, true, () => {
         finalizeOrder(custName, tableNum, finalTotalStr, rawTotal);
     });
@@ -725,14 +756,13 @@ function finalizeOrder(name, table, finalTotal, rawTotal) {
         rawTotal: rawTotal,
         finalTotal: finalTotal,
         paymentMethod: 'Pending',
-        paymentStatus: 'Unpaid', // Start as Unpaid
-        status: 'Pending', // Start as Pending Kitchen Status
+        paymentStatus: 'Unpaid', 
+        status: 'Pending', 
         timestamp: new Date().toLocaleString()
     };
     
     allOrders.push(newOrder);
 
-    // Stock deduction
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
