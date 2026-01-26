@@ -177,10 +177,10 @@ let paymentMethods = [
     { id: 'card', name: 'Credit/Debit Card', active: false }
 ];
 
-// --- ORDERS DATABASE ---
+// --- DATABASES ---
 let allOrders = [];
+let customers = [];
 let orderIdCounter = 1;
-
 let cart = [];
 
 // --- INITIALIZATION ---
@@ -322,6 +322,102 @@ function togglePaymentMethod(id) {
     if(method) method.active = !method.active;
 }
 
+// --- CUSTOMER HISTORY (NEW) ---
+
+function showCustomers() {
+    let html = `
+        <input type="text" id="cust-search" class="search-bar" placeholder="Search customer name..." oninput="searchCustomers()">
+        <div id="cust-results" style="max-height:300px; overflow-y:auto; text-align:left;">
+            <p style="color:#888; text-align:center;">Type to search or view recent.</p>
+        </div>
+    `;
+    showCustomModal("Customer Database", html, false);
+    
+    document.getElementById('modal-actions').innerHTML = `
+        <button class="modal-btn only-ok" onclick="closeModal()">Close</button>
+    `;
+    
+    // Show all initially
+    searchCustomers();
+}
+
+function searchCustomers() {
+    const query = document.getElementById('cust-search') ? document.getElementById('cust-search').value.toLowerCase() : '';
+    const resultsContainer = document.getElementById('cust-results');
+    
+    const matches = customers.filter(c => c.name.toLowerCase().includes(query));
+    
+    if(matches.length === 0) {
+        resultsContainer.innerHTML = '<p style="color:#888; text-align:center; margin-top:20px;">No customers found.</p>';
+        return;
+    }
+
+    let html = '';
+    matches.forEach(c => {
+        html += `
+            <div class="customer-list-item" onclick="selectCustomer('${c.name}')">
+                <div>
+                    <b>${c.name}</b><br>
+                    <span style="font-size:0.8rem; color:#666;">${c.phone || 'No Phone'} • Visits: ${c.visits}</span>
+                </div>
+                <span>➡️</span>
+            </div>
+        `;
+    });
+    resultsContainer.innerHTML = html;
+}
+
+function selectCustomer(name) {
+    const customer = customers.find(c => c.name === name);
+    if(!customer) return;
+
+    let historyHTML = '';
+    const customerOrders = allOrders.filter(o => o.customer === name).reverse();
+
+    customerOrders.forEach(o => {
+        let items = o.items.map(i => i.name).join(', ');
+        historyHTML += `
+            <div class="history-card">
+                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                    <span>${o.timestamp.split(',')[0]}</span>
+                    <span>${o.finalTotal}</span>
+                </div>
+                <p style="margin:5px 0; color:#555;">${items}</p>
+                <span class="status-badge ${o.status === 'Completed' ? 'status-completed' : 'status-pending'}" style="font-size:0.7rem;">${o.status}</span>
+            </div>
+        `;
+    });
+
+    let html = `
+        <div style="text-align:left;">
+            <p><strong>Phone:</strong> ${customer.phone || 'N/A'}</p>
+            <p><strong>Email:</strong> ${customer.email || 'N/A'}</p>
+            <hr style="margin:15px 0; border-top:1px dashed #ccc;">
+            <h4 style="margin-bottom:10px;">Order History</h4>
+            <div style="max-height:200px; overflow-y:auto;">
+                ${historyHTML || '<p>No history found.</p>'}
+            </div>
+        </div>
+    `;
+
+    showCustomModal(customer.name, html, false);
+
+    document.getElementById('modal-actions').innerHTML = `
+        <button class="modal-btn cancel" onclick="showCustomers()">Back</button>
+        <button class="modal-btn confirm" onclick="useCustomer('${name}')">Start New Order</button>
+    `;
+}
+
+function useCustomer(name) {
+    const customer = customers.find(c => c.name === name);
+    if(customer) {
+        document.getElementById('cust-name').value = customer.name;
+        document.getElementById('cust-phone').value = customer.phone;
+        document.getElementById('cust-email').value = customer.email;
+    }
+    closeModal();
+}
+
 // --- INVENTORY MANAGEMENT ---
 
 function showInventory() {
@@ -387,7 +483,6 @@ function showOrders() {
     const pendingOrders = allOrders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled');
     const completedOrders = allOrders.filter(o => o.status === 'Completed' || o.status === 'Cancelled').reverse();
 
-    // PENDING/COOKING/SERVED Section
     if(pendingOrders.length === 0) {
         pendingHTML = '<p style="color:#888; text-align:center; padding:10px;">No active orders.</p>';
     } else {
@@ -396,7 +491,6 @@ function showOrders() {
                 return i.notes ? `${i.name} <i>(${i.notes})</i>` : i.name;
             }).join(', ');
 
-            // Status Logic for Button
             let nextActionBtn = '';
             let nextStatus = '';
             let badgeClass = 'status-pending';
@@ -418,7 +512,6 @@ function showOrders() {
                 badgeClass = 'status-served';
             }
 
-            // Payment Badge logic
             let payBadge = order.paymentStatus === 'Paid' 
                 ? `<span class="pay-badge pay-paid">PAID</span>` 
                 : `<span class="pay-badge pay-unpaid">UNPAID</span>`;
@@ -446,7 +539,6 @@ function showOrders() {
         });
     }
 
-    // HISTORY Section
     if(completedOrders.length === 0) {
         completedHTML = '<p style="color:#888; text-align:center; padding:10px;">No history.</p>';
     } else {
@@ -690,8 +782,7 @@ function checkout() {
     const custName = custNameEl.value;
     let rawTotal = parseFloat(totalEl.innerText.replace('₱', ''));
     
-    // Initial check - payment happens LATER, so we just show estimated total
-    // But we capture if the discount toggle was PRE-set (optional, mostly done at payment)
+    // Apply Discount Logic
     let isDiscounted = discountEl && discountEl.checked;
     let discountAmount = isDiscounted ? rawTotal * 0.20 : 0;
     let finalTotal = rawTotal - discountAmount;
@@ -718,7 +809,6 @@ function checkout() {
         `;
     });
 
-    // If pre-toggled
     if(isDiscounted) {
         receiptHTML += `
             <div class="review-item" style="color:var(--primary); font-weight:bold;">
@@ -737,6 +827,7 @@ function checkout() {
         <p style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">Payment collected AFTER dining.</p>
     `;
 
+    // Pass both totals for history accuracy
     showCustomModal("Review Order", receiptHTML, true, () => {
         finalizeOrder(custName, tableNum, finalTotalStr, rawTotal);
     });
@@ -756,13 +847,29 @@ function finalizeOrder(name, table, finalTotal, rawTotal) {
         rawTotal: rawTotal,
         finalTotal: finalTotal,
         paymentMethod: 'Pending',
-        paymentStatus: 'Unpaid', 
-        status: 'Pending', 
+        paymentStatus: 'Unpaid', // Start as Unpaid
+        status: 'Pending', // Start as Pending Kitchen Status
         timestamp: new Date().toLocaleString()
     };
     
     allOrders.push(newOrder);
 
+    // Save/Update Customer Info
+    const existingCust = customers.find(c => c.name === name);
+    if(existingCust) {
+        existingCust.visits += 1;
+        existingCust.phone = custPhone || existingCust.phone;
+        existingCust.email = custEmail || existingCust.email;
+    } else {
+        customers.push({
+            name: name,
+            phone: custPhone,
+            email: custEmail,
+            visits: 1
+        });
+    }
+
+    // Stock deduction
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
