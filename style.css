@@ -311,11 +311,10 @@ input:checked + .slider:before { transform: translateX(16px); }
 .modal-btn.confirm { background: var(--primary); color: white; }
 .modal-btn.only-ok { background: var(--primary); color: white; width: 100%; }
 
-/* --- PRINT STYLES (Clean Receipt) --- */
+/* --- PRINT STYLES --- */
 @media print {
     body { background: white; color: black; height: auto; overflow: visible; font-family: monospace; }
     .pos-container, .modal-actions, .icon-btn, .checkout-btn { display: none !important; }
-    /* Force Modal Content to show on paper */
     .modal-overlay { 
         position: static; 
         background: white; 
@@ -334,6 +333,5 @@ input:checked + .slider:before { transform: translateX(16px); }
         text-align: left;
     }
     .modal-body { max-height: none; overflow: visible; }
-    /* Hide UI badges in print */
     .status-badge, .action-btn { display: none; }
 }
