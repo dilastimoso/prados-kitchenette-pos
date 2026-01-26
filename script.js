@@ -1,6 +1,6 @@
-// FULL MENU DATABASE FROM IMAGES
+// --- FULL MENU DATABASE FROM IMAGES ---
 const menuData = [
-    // RICE TOPPINGS (Image 1 Left & Right)
+    // RICE TOPPINGS
     { id: 101, name: "Chicken", price: 68.00, category: "Rice Toppings" },
     { id: 102, name: "Chicksilog", price: 78.00, category: "Rice Toppings" },
     { id: 103, name: "Porkchop", price: 70.00, category: "Rice Toppings" },
@@ -46,7 +46,7 @@ const menuData = [
     { id: 143, name: "Gulam Rice", price: 105.00, category: "Rice Toppings" },
     { id: 144, name: "Fried Tilapia", price: 85.00, category: "Rice Toppings" },
 
-    // SOUP (Image 2)
+    // SOUP
     { id: 201, name: "Hototay", price: 85.00, category: "Soup" },
     { id: 202, name: "Tinolang Baboy", price: 90.00, category: "Soup" },
     { id: 203, name: "Sinigang Baboy", price: 95.00, category: "Soup" },
@@ -64,7 +64,7 @@ const menuData = [
     { id: 215, name: "1/2 Tinolang Manok", price: 150.00, category: "Soup" },
     { id: 216, name: "Balbacua", price: 50.00, category: "Soup" },
 
-    // NOODLES (Image 2)
+    // NOODLES
     { id: 301, name: "Mami", price: 50.00, category: "Noodles" },
     { id: 302, name: "Pancit", price: 130.00, category: "Noodles" },
     { id: 303, name: "Canton", price: 140.00, category: "Noodles" },
@@ -79,7 +79,7 @@ const menuData = [
     { id: 312, name: "Pancit Con Chopsuey", price: 160.00, category: "Noodles" },
     { id: 313, name: "Sotanghon Con", price: 160.00, category: "Noodles" },
     
-    // SEAFOODS (Image 3)
+    // SEAFOODS
     { id: 401, name: "Adobong Hipon", price: 200.00, category: "Seafoods" },
     { id: 402, name: "Shrimp Omelette", price: 80.00, category: "Seafoods" },
     { id: 403, name: "Crispy Shrimp", price: 80.00, category: "Seafoods" },
@@ -94,14 +94,14 @@ const menuData = [
     { id: 412, name: "Hyscian Pancit", price: 160.00, category: "Seafoods" },
     { id: 413, name: "Daing na Bangus (2pcs)", price: 150.00, category: "Seafoods" },
 
-    // HITO/CATFISH (Image 3)
+    // HITO/CATFISH
     { id: 501, name: "Fried Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 502, name: "Spicy Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 503, name: "Adobong Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 504, name: "Ginataang Hito", price: 300.00, category: "Hito/Catfish" },
     { id: 505, name: "Curry Hito", price: 300.00, category: "Hito/Catfish" },
 
-    // BEEF (Image 3)
+    // BEEF
     { id: 601, name: "Gulam Guisado", price: 100.00, category: "Beef" },
     { id: 602, name: "Beef Omelet", price: 90.00, category: "Beef" },
     { id: 603, name: "Beef Torta", price: 90.00, category: "Beef" },
@@ -112,7 +112,7 @@ const menuData = [
     { id: 608, name: "Beef w/ Onion", price: 250.00, category: "Beef" },
     { id: 609, name: "Beef Steak", price: 250.00, category: "Beef" },
 
-    // APPETIZERS (Image 3)
+    // APPETIZERS
     { id: 701, name: "Pork Sisig", price: 115.00, category: "Appetizers" },
     { id: 702, name: "Beef Sisig", price: 115.00, category: "Appetizers" },
     { id: 703, name: "Tuna Sisig", price: 115.00, category: "Appetizers" },
@@ -122,19 +122,19 @@ const menuData = [
     { id: 707, name: "Onion Rings", price: 60.00, category: "Appetizers" },
     { id: 708, name: "Camaron Rebosado", price: 190.00, category: "Appetizers" },
 
-    // VEGETABLES (Image 3)
+    // VEGETABLES
     { id: 801, name: "Chopsuey", price: 150.00, category: "Vegetables" },
     { id: 802, name: "Pinakbet", price: 140.00, category: "Vegetables" },
     { id: 803, name: "Samsi", price: 120.00, category: "Vegetables" },
     { id: 804, name: "Tortang Talong", price: 30.00, category: "Vegetables" },
     
-    // RICE (Image 3)
+    // RICE
     { id: 901, name: "Plain Cup of Rice", price: 15.00, category: "Rice" },
     { id: 902, name: "Garlic Rice", price: 50.00, category: "Rice" },
     { id: 903, name: "Fried Rice (S)", price: 90.00, category: "Rice" },
     { id: 904, name: "Fried Rice (L)", price: 130.00, category: "Rice" },
 
-    // PORK (Main Dishes - Image 4)
+    // PORK (Main Dishes)
     { id: 1001, name: "Pork Omelette", price: 80.00, category: "Pork" },
     { id: 1002, name: "Pork Torta", price: 90.00, category: "Pork" },
     { id: 1003, name: "Litson Kawali (Platter)", price: 220.00, category: "Pork" },
@@ -155,7 +155,7 @@ const menuData = [
     { id: 1018, name: "Crispy Pata", price: 550.00, category: "Pork" },
     { id: 1019, name: "Patatim", price: 550.00, category: "Pork" },
 
-    // CHICKEN (Main Dishes - Image 4)
+    // CHICKEN (Main Dishes)
     { id: 1101, name: "Chicken Adobo", price: 260.00, category: "Chicken" },
     { id: 1102, name: "Chicken Curry", price: 170.00, category: "Chicken" },
     { id: 1103, name: "Chicken Pork Adobo", price: 260.00, category: "Chicken" },
@@ -174,6 +174,7 @@ let cart = [];
 
 // Initialize Categories
 function initCategories() {
+    // Unique categories including "All"
     const categories = ["All", ...new Set(menuData.map(item => item.category))];
     const tabContainer = document.getElementById('category-tabs');
     
@@ -183,7 +184,7 @@ function initCategories() {
     `).join('');
 }
 
-// Initialize Menu
+// Display Items
 function displayMenu(items) {
     const grid = document.getElementById('menu-grid');
     grid.innerHTML = items.map(item => `
@@ -194,6 +195,7 @@ function displayMenu(items) {
     `).join('');
 }
 
+// Filter Function
 function filterMenu(category) {
     const filtered = category === 'All' ? menuData : menuData.filter(i => i.category === category);
     displayMenu(filtered);
@@ -205,6 +207,7 @@ function filterMenu(category) {
     });
 }
 
+// Cart Logic
 function addToCart(id) {
     const item = menuData.find(i => i.id === id);
     cart.push(item);
@@ -238,27 +241,114 @@ function removeFromCart(index) {
     renderCart();
 }
 
+// --- CUSTOM MODAL LOGIC ---
+
+// Helper to show the modal
+function showCustomModal(title, htmlContent, isConfirmType, callback) {
+    const modal = document.getElementById('custom-modal');
+    const titleEl = document.getElementById('modal-title');
+    const contentEl = document.getElementById('modal-content');
+    const actionsEl = document.getElementById('modal-actions');
+
+    titleEl.innerText = title;
+    contentEl.innerHTML = htmlContent;
+
+    if (isConfirmType) {
+        // Show Cancel and Confirm buttons
+        actionsEl.innerHTML = `
+            <button class="modal-btn cancel" onclick="closeModal()">Edit Order</button>
+            <button class="modal-btn confirm" id="dynamic-confirm-btn">Confirm Order</button>
+        `;
+        document.getElementById('dynamic-confirm-btn').onclick = callback;
+    } else {
+        // Show only OK button for errors/alerts
+        actionsEl.innerHTML = `
+            <button class="modal-btn only-ok" onclick="closeModal()">Okay</button>
+        `;
+    }
+
+    modal.classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('custom-modal').classList.remove('active');
+}
+
+// Overwritten Checkout Function
 function checkout() {
     const tableNum = document.getElementById('table-num').value;
     const custName = document.getElementById('cust-name').value;
     const custPhone = document.getElementById('cust-phone').value;
+    const totalText = document.getElementById('total-price').innerText;
 
-    if(cart.length === 0) return alert("Cart is empty!");
-    if(!tableNum || !custName) return alert("Please fill in Table Number and Customer Name.");
+    // Validation using Custom Modal
+    if(cart.length === 0) {
+        return showCustomModal("Oops!", "<p style='text-align:center'>Your cart is empty.</p>", false);
+    }
+    if(!tableNum || !custName) {
+        return showCustomModal("Missing Info", "<p style='text-align:center'>Please fill in <b>Table Number</b> and <b>Customer Name</b>.</p>", false);
+    }
 
+    // Build Receipt Preview for the Modal
+    let receiptHTML = `
+        <div style="text-align:center; margin-bottom:10px;">
+            <p><strong>Table:</strong> ${tableNum}</p>
+            <p><strong>Customer:</strong> ${custName}</p>
+        </div>
+        <div class="review-list">
+    `;
+
+    cart.forEach(item => {
+        receiptHTML += `
+            <div class="review-item">
+                <span>${item.name}</span>
+                <span>₱${item.price.toFixed(2)}</span>
+            </div>
+        `;
+    });
+
+    receiptHTML += `
+        </div>
+        <div class="review-total">
+            <span>TOTAL</span>
+            <span>${totalText}</span>
+        </div>
+    `;
+
+    // Show the Confirmation Screen
+    showCustomModal("Review Order", receiptHTML, true, () => {
+        // Only executes if user clicks "Confirm"
+        finalizeOrder(custName, tableNum, custPhone, totalText);
+    });
+}
+
+function finalizeOrder(name, table, phone, total) {
     const orderDetails = {
-        customer: custName,
-        table: tableNum,
-        phone: custPhone,
+        customer: name,
+        table: table,
+        phone: phone,
         items: cart,
-        total: document.getElementById('total-price').innerText,
+        total: total,
         date: new Date().toLocaleString()
     };
 
-    console.log("Order Placed:", orderDetails);
-    alert(`Order Placed for ${custName} (Table ${tableNum})!\nTotal: ${orderDetails.total}`);
+    console.log("Order Finalized:", orderDetails);
     
-    // Reset
+    // Close the review modal
+    closeModal();
+
+    // Show Success Modal
+    setTimeout(() => {
+        showCustomModal("Success!", `
+            <div style="text-align:center">
+                <p>Order sent to kitchen!</p>
+                <h2 style="color:var(--primary); margin:10px 0;">Table ${table}</h2>
+                <p>Thank you, ${name}</p>
+            </div>
+        `, false);
+    }, 300);
+    
+    // Reset Data
     cart = [];
     renderCart();
     document.getElementById('table-num').value = '';
