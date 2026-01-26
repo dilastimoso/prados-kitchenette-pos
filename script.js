@@ -322,7 +322,7 @@ function togglePaymentMethod(id) {
     if(method) method.active = !method.active;
 }
 
-// --- CUSTOMER HISTORY (NEW) ---
+// --- CUSTOMER HISTORY ---
 
 function showCustomers() {
     let html = `
@@ -337,7 +337,6 @@ function showCustomers() {
         <button class="modal-btn only-ok" onclick="closeModal()">Close</button>
     `;
     
-    // Show all initially
     searchCustomers();
 }
 
@@ -416,6 +415,101 @@ function useCustomer(name) {
         document.getElementById('cust-email').value = customer.email;
     }
     closeModal();
+}
+
+// --- SALES REPORT (NEW) ---
+
+function showSales() {
+    // 1. Calculate Stats
+    const completedOrders = allOrders.filter(o => o.status === 'Completed');
+    
+    // Total Revenue (Fix: parse currency strings like "₱150.00")
+    let totalRevenue = completedOrders.reduce((sum, o) => {
+        let val = parseFloat(o.finalTotal.replace('₱','').replace(',','')) || 0;
+        return sum + val;
+    }, 0);
+
+    // Today's Sales
+    const todayStr = new Date().toLocaleDateString(); 
+    const todayOrders = completedOrders.filter(o => {
+        // o.timestamp format: "1/26/2026, 10:00:00 AM"
+        return o.timestamp.startsWith(todayStr); 
+    });
+    
+    let todayRevenue = todayOrders.reduce((sum, o) => {
+        let val = parseFloat(o.finalTotal.replace('₱','').replace(',','')) || 0;
+        return sum + val;
+    }, 0);
+
+    // Payment Breakdown
+    let breakdown = { 'Cash': 0, 'GCash': 0, 'Others': 0 };
+    completedOrders.forEach(o => {
+        let method = o.paymentMethod || 'Cash';
+        let val = parseFloat(o.finalTotal.replace('₱','').replace(',','')) || 0;
+        
+        if (method === 'Cash' || method === 'Unknown/Cash') breakdown['Cash'] += val;
+        else if (method === 'GCash') breakdown['GCash'] += val;
+        else breakdown['Others'] += val;
+    });
+
+    // 2. Build HTML
+    let historyRows = completedOrders.slice().reverse().map(o => `
+        <tr>
+            <td>${o.id}</td>
+            <td>${o.customer}</td>
+            <td>${o.paymentMethod}</td>
+            <td style="text-align:right;">${o.finalTotal}</td>
+        </tr>
+    `).join('');
+
+    let html = `
+        <div class="sales-dashboard">
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h5>Total Revenue</h5>
+                    <h2>₱${totalRevenue.toLocaleString(undefined, {minimumFractionDigits:2})}</h2>
+                </div>
+                <div class="summary-card">
+                    <h5>Today's Sales</h5>
+                    <h2>₱${todayRevenue.toLocaleString(undefined, {minimumFractionDigits:2})}</h2>
+                </div>
+                <div class="summary-card">
+                    <h5>Total Orders</h5>
+                    <h2>${completedOrders.length}</h2>
+                </div>
+                <div class="summary-card">
+                    <h5>Cash vs GCash</h5>
+                    <p style="font-size:0.8rem; margin-top:5px;">
+                        Cash: ₱${breakdown['Cash'].toLocaleString()}<br>
+                        GCash: ₱${breakdown['GCash'].toLocaleString()}
+                    </p>
+                </div>
+            </div>
+
+            <h5 style="border-bottom:1px solid #ddd; padding-bottom:5px; margin-bottom:5px;">Recent Transactions</h5>
+            <div style="max-height:150px; overflow-y:auto;">
+                <table class="sales-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Method</th>
+                            <th style="text-align:right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${historyRows || '<tr><td colspan="4" style="text-align:center;">No data</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    showCustomModal("Sales Report", html, false);
+    
+    document.getElementById('modal-actions').innerHTML = `
+        <button class="modal-btn only-ok" onclick="closeModal()">Close</button>
+    `;
 }
 
 // --- INVENTORY MANAGEMENT ---
@@ -847,8 +941,8 @@ function finalizeOrder(name, table, finalTotal, rawTotal) {
         rawTotal: rawTotal,
         finalTotal: finalTotal,
         paymentMethod: 'Pending',
-        paymentStatus: 'Unpaid', // Start as Unpaid
-        status: 'Pending', // Start as Pending Kitchen Status
+        paymentStatus: 'Unpaid', 
+        status: 'Pending', 
         timestamp: new Date().toLocaleString()
     };
     
