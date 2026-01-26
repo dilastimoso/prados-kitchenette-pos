@@ -237,6 +237,11 @@ input:checked + .slider:before { transform: translateX(16px); }
 .status-completed { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 .status-cancelled { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
+/* PAID / UNPAID Badges */
+.pay-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 5px; margin-left: 5px; }
+.pay-unpaid { background: #ffcccc; color: #cc0000; border: 1px solid #ff9999; }
+.pay-paid { background: #ccffcc; color: #006600; border: 1px solid #99ff99; }
+
 .action-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition:0.2s; }
 .btn-progress { background: linear-gradient(145deg, var(--primary), #1b4d36); color: white; }
 .btn-progress:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
@@ -306,10 +311,11 @@ input:checked + .slider:before { transform: translateX(16px); }
 .modal-btn.confirm { background: var(--primary); color: white; }
 .modal-btn.only-ok { background: var(--primary); color: white; width: 100%; }
 
-/* --- PRINT STYLES --- */
+/* --- PRINT STYLES (Clean Receipt) --- */
 @media print {
-    body { background: white; color: black; height: auto; overflow: visible; }
+    body { background: white; color: black; height: auto; overflow: visible; font-family: monospace; }
     .pos-container, .modal-actions, .icon-btn, .checkout-btn { display: none !important; }
+    /* Force Modal Content to show on paper */
     .modal-overlay { 
         position: static; 
         background: white; 
@@ -325,7 +331,9 @@ input:checked + .slider:before { transform: translateX(16px); }
         max-width: 100%; 
         transform: none; 
         padding: 0;
+        text-align: left;
     }
     .modal-body { max-height: none; overflow: visible; }
+    /* Hide UI badges in print */
     .status-badge, .action-btn { display: none; }
 }
