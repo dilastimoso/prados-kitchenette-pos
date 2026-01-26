@@ -169,6 +169,14 @@ const inventoryData = menuData.map(item => ({
     expiration_date: "2026-12-31"
 }));
 
+// --- PAYMENT METHODS (NEW) ---
+let paymentMethods = [
+    { id: 'cash', name: 'Cash', active: true },
+    { id: 'gcash', name: 'GCash', active: true },
+    { id: 'maya', name: 'Maya', active: false },
+    { id: 'card', name: 'Credit/Debit Card', active: false }
+];
+
 // --- ORDERS DATABASE ---
 let allOrders = [];
 let orderIdCounter = 1;
@@ -214,19 +222,16 @@ function filterMenu(category) {
 // --- CART LOGIC WITH REQUEST BOX ---
 
 function addToCart(id) {
-    // 1. Check Stock First
     const inv = inventoryData.find(i => i.menu_id === id);
     if(inv.quantity_on_hand <= 0) {
         return showCustomModal("Out of Stock", `<p>Sorry, <b>${inv.name}</b> is currently unavailable.</p>`, false);
     }
     
-    // Check if adding exceeds stock (Counting existing items in cart)
     const inCart = cart.filter(i => i.id === id).length;
     if(inCart + 1 > inv.quantity_on_hand) {
         return showCustomModal("Low Stock", `<p>Only ${inv.quantity_on_hand} available.</p>`, false);
     }
 
-    // 2. Open Request Modal
     const item = menuData.find(i => i.id === id);
     
     const htmlContent = `
@@ -237,7 +242,6 @@ function addToCart(id) {
 
     showCustomModal(`Add ${item.name}`, htmlContent, true, () => confirmAddToCart(id));
     
-    // Change "Confirm Order" button text to "Add to Order" and "Cancel"
     const confirmBtn = document.getElementById('dynamic-confirm-btn');
     if(confirmBtn) confirmBtn.innerText = "Add to Order";
 }
@@ -247,8 +251,7 @@ function confirmAddToCart(id) {
     const requestBox = document.getElementById(`item-request-${id}`);
     const notes = requestBox ? requestBox.value.trim() : "";
 
-    // Add item clone with notes to cart
-    cart.push({ ...item, notes: notes }); // Clone item so notes don't stick to global object
+    cart.push({ ...item, notes: notes });
     
     renderCart();
     closeModal();
@@ -286,6 +289,39 @@ function removeFromCart(index) {
     cart.splice(index, 1);
     renderCart();
 }
+
+// --- PAYMENT SETTINGS (NEW) ---
+
+function showPaymentSettings() {
+    let html = `<div style="text-align:left;">`;
+    
+    paymentMethods.forEach(method => {
+        const isChecked = method.active ? 'checked' : '';
+        html += `
+            <div class="payment-row">
+                <span>${method.name}</span>
+                <label class="switch">
+                    <input type="checkbox" onchange="togglePaymentMethod('${method.id}')" ${isChecked}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    
+    showCustomModal("Payment Methods", html, false);
+    
+    document.getElementById('modal-actions').innerHTML = `
+        <button class="modal-btn only-ok" onclick="closeModal()">Close</button>
+    `;
+}
+
+function togglePaymentMethod(id) {
+    const method = paymentMethods.find(m => m.id === id);
+    if(method) method.active = !method.active;
+}
+
 
 // --- INVENTORY MANAGEMENT ---
 
@@ -370,7 +406,6 @@ function showOrders() {
         pendingHTML = '<p style="color:#888; text-align:center; padding:10px;">No pending orders.</p>';
     } else {
         pendingOrders.forEach(order => {
-            // Show notes in kitchen order view
             let itemsList = order.items.map(i => {
                 return i.notes ? `${i.name} <i>(${i.notes})</i>` : i.name;
             }).join(', ');
@@ -401,6 +436,7 @@ function showOrders() {
         completedOrders.forEach(order => {
             let statusClass = order.status === 'Completed' ? 'status-completed' : 'status-cancelled';
             let itemsList = order.items.map(i => i.name).join(', ');
+            // Added Payment method to history display
             completedHTML += `
                 <div class="order-card" style="opacity:0.8; background:#f9f9f9;">
                     <div class="order-header">
@@ -410,7 +446,7 @@ function showOrders() {
                     <div class="order-details">
                         <b>${order.customer}</b><br>
                         ${itemsList}<br>
-                        ${order.total}
+                        ${order.total} • <i>${order.paymentMethod}</i>
                     </div>
                 </div>
             `;
@@ -502,6 +538,23 @@ function checkout() {
     if(cart.length === 0) return showCustomModal("Cart Empty", "<p>Please add items.</p>", false);
     if(!tableNum || !custName) return showCustomModal("Missing Info", "<p>Enter Table # and Name.</p>", false);
 
+    // Filter Active Payment Methods
+    const activeMethods = paymentMethods.filter(m => m.active);
+    let paymentSelectHTML = '';
+    
+    if(activeMethods.length === 0) {
+         paymentSelectHTML = `<p style="color:red; font-size:0.8rem;">No payment methods active!</p>`;
+    } else {
+        paymentSelectHTML = `
+            <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
+                <label style="font-size:0.9rem; font-weight:bold;">Payment Method:</label>
+                <select id="payment-method-select" class="form-input" style="margin-top:5px;">
+                    ${activeMethods.map(m => `<option value="${m.name}">${m.name}</option>`).join('')}
+                </select>
+            </div>
+        `;
+    }
+
     let receiptHTML = `
         <div style="text-align:center; margin-bottom:10px; font-size:0.9rem;">
             <p><strong>Table:</strong> ${tableNum} (${tableStatus})</p>
@@ -522,6 +575,7 @@ function checkout() {
 
     receiptHTML += `
         </div>
+        ${paymentSelectHTML}
         <div class="review-total">
             <span>TOTAL</span>
             <span>${totalText}</span>
@@ -534,24 +588,23 @@ function checkout() {
 }
 
 function finalizeOrder(name, table, total) {
+    // Get Selected Payment Method
+    const paymentSelect = document.getElementById('payment-method-select');
+    const paymentMethod = paymentSelect ? paymentSelect.value : "Unknown";
+
     const newOrder = {
         id: orderIdCounter++,
         customer: name,
         table: table,
         items: [...cart],
         total: total,
+        paymentMethod: paymentMethod, // Store it
         status: 'Pending',
         timestamp: new Date().toLocaleString()
     };
     
     allOrders.push(newOrder);
 
-    // Stock already deducted upon checkout in some systems, but here we did it visually. 
-    // Actually, simple POS usually deducts on order placement.
-    // Stock logic was handled in `addToCart`? No, addToCart checks stock.
-    // We need to deduct stock NOW if we haven't already.
-    // Wait, previous logic deducted in finalize. Let's keep that.
-    
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
@@ -571,6 +624,7 @@ function finalizeOrder(name, table, total) {
                 <p>Order #${newOrder.id} sent to kitchen!</p>
                 <h2 style="color:var(--primary); margin:15px 0;">Table ${table}</h2>
                 <p>Total: ${total}</p>
+                <p style="font-size:0.9rem; color:#666; margin-top:5px;">Paid via ${paymentMethod}</p>
             </div>
         `, false);
     }, 300);
