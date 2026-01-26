@@ -211,22 +211,47 @@ function filterMenu(category) {
     });
 }
 
-// --- CART LOGIC ---
+// --- CART LOGIC WITH REQUEST BOX ---
 
 function addToCart(id) {
+    // 1. Check Stock First
     const inv = inventoryData.find(i => i.menu_id === id);
     if(inv.quantity_on_hand <= 0) {
         return showCustomModal("Out of Stock", `<p>Sorry, <b>${inv.name}</b> is currently unavailable.</p>`, false);
     }
     
+    // Check if adding exceeds stock (Counting existing items in cart)
     const inCart = cart.filter(i => i.id === id).length;
     if(inCart + 1 > inv.quantity_on_hand) {
         return showCustomModal("Low Stock", `<p>Only ${inv.quantity_on_hand} available.</p>`, false);
     }
 
+    // 2. Open Request Modal
     const item = menuData.find(i => i.id === id);
-    cart.push(item);
+    
+    const htmlContent = `
+        <p style="margin-bottom:10px;">Price: <b>₱${item.price.toFixed(2)}</b></p>
+        <p style="font-size:0.9rem; color:#555;">Special Requests / Allergies:</p>
+        <textarea id="item-request-${id}" class="request-input" placeholder="e.g. No onions, less spicy..."></textarea>
+    `;
+
+    showCustomModal(`Add ${item.name}`, htmlContent, true, () => confirmAddToCart(id));
+    
+    // Change "Confirm Order" button text to "Add to Order" and "Cancel"
+    const confirmBtn = document.getElementById('dynamic-confirm-btn');
+    if(confirmBtn) confirmBtn.innerText = "Add to Order";
+}
+
+function confirmAddToCart(id) {
+    const item = menuData.find(i => i.id === id);
+    const requestBox = document.getElementById(`item-request-${id}`);
+    const notes = requestBox ? requestBox.value.trim() : "";
+
+    // Add item clone with notes to cart
+    cart.push({ ...item, notes: notes }); // Clone item so notes don't stick to global object
+    
     renderCart();
+    closeModal();
 }
 
 function renderCart() {
@@ -239,13 +264,19 @@ function renderCart() {
         return;
     }
 
-    cartContainer.innerHTML = cart.map((item, index) => `
-        <div class="cart-item">
-            <span style="flex:1">${item.name}</span>
-            <span style="font-weight:bold">₱${item.price.toFixed(2)}</span>
-            <span style="color:var(--accent); cursor:pointer; margin-left:10px;" onclick="removeFromCart(${index})">✕</span>
-        </div>
-    `).join('');
+    cartContainer.innerHTML = cart.map((item, index) => {
+        const noteHtml = item.notes ? `<span class="item-note">Note: ${item.notes}</span>` : '';
+        return `
+            <div class="cart-item">
+                <div style="flex:1">
+                    <span>${item.name}</span>
+                    ${noteHtml}
+                </div>
+                <span style="font-weight:bold; margin:0 10px;">₱${item.price.toFixed(2)}</span>
+                <span style="color:var(--accent); cursor:pointer;" onclick="removeFromCart(${index})">✕</span>
+            </div>
+        `;
+    }).join('');
 
     const total = cart.reduce((sum, item) => sum + item.price, 0);
     totalDisplay.innerText = `₱${total.toFixed(2)}`;
@@ -326,21 +357,24 @@ function checkExpirations() {
     }
 }
 
-// --- ORDER MANAGEMENT (NEW FEATURE) ---
+// --- ORDER MANAGEMENT ---
 
 function showOrders() {
     let pendingHTML = '';
     let completedHTML = '';
 
     const pendingOrders = allOrders.filter(o => o.status === 'Pending');
-    const completedOrders = allOrders.filter(o => o.status !== 'Pending').reverse(); // Newest first
+    const completedOrders = allOrders.filter(o => o.status !== 'Pending').reverse();
 
-    // Build Pending List
     if(pendingOrders.length === 0) {
         pendingHTML = '<p style="color:#888; text-align:center; padding:10px;">No pending orders.</p>';
     } else {
         pendingOrders.forEach(order => {
-            let itemsList = order.items.map(i => `${i.name}`).join(', ');
+            // Show notes in kitchen order view
+            let itemsList = order.items.map(i => {
+                return i.notes ? `${i.name} <i>(${i.notes})</i>` : i.name;
+            }).join(', ');
+
             pendingHTML += `
                 <div class="order-card">
                     <div class="order-header">
@@ -349,7 +383,7 @@ function showOrders() {
                     </div>
                     <div class="order-details">
                         <b>${order.customer}</b><br>
-                        Items: ${itemsList}<br>
+                        ${itemsList}<br>
                         Total: ${order.total}
                     </div>
                     <div class="order-actions">
@@ -361,13 +395,12 @@ function showOrders() {
         });
     }
 
-    // Build History List
     if(completedOrders.length === 0) {
         completedHTML = '<p style="color:#888; text-align:center; padding:10px;">No history.</p>';
     } else {
         completedOrders.forEach(order => {
             let statusClass = order.status === 'Completed' ? 'status-completed' : 'status-cancelled';
-            let itemsList = order.items.map(i => `${i.name}`).join(', ');
+            let itemsList = order.items.map(i => i.name).join(', ');
             completedHTML += `
                 <div class="order-card" style="opacity:0.8; background:#f9f9f9;">
                     <div class="order-header">
@@ -393,7 +426,6 @@ function showOrders() {
 
     showCustomModal("Orders", fullHTML, false);
     
-    // Add a simple Close button
     document.getElementById('modal-actions').innerHTML = `
         <button class="modal-btn only-ok" onclick="closeModal()">Close</button>
     `;
@@ -406,7 +438,6 @@ function updateOrderStatus(id, newStatus) {
     order.status = newStatus;
 
     if (newStatus === 'Cancelled') {
-        // Return items to stock
         order.items.forEach(orderItem => {
             const invItem = inventoryData.find(i => i.menu_id === orderItem.id);
             if (invItem) {
@@ -414,13 +445,11 @@ function updateOrderStatus(id, newStatus) {
             }
         });
         
-        // Refresh Stock View if open
         const activeBtn = document.querySelector('.tab-btn.active');
         const activeTab = activeBtn ? activeBtn.innerText : 'All';
         filterMenu(activeTab);
     }
 
-    // Re-render the orders modal to show changes immediately
     showOrders();
 }
 
@@ -437,8 +466,8 @@ function showCustomModal(title, htmlContent, isConfirmType, callback) {
 
     if (isConfirmType) {
         actionsEl.innerHTML = `
-            <button class="modal-btn cancel" onclick="closeModal()">Edit</button>
-            <button class="modal-btn confirm" id="dynamic-confirm-btn">Confirm Order</button>
+            <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn confirm" id="dynamic-confirm-btn">Confirm</button>
         `;
         document.getElementById('dynamic-confirm-btn').onclick = callback;
     } else {
@@ -461,7 +490,7 @@ function checkout() {
     const totalEl = document.getElementById('total-price');
 
     if (!tableNumEl || !custNameEl || !totalEl) {
-        alert("Error: Missing input fields in HTML. Please verify index.html.");
+        alert("Error: Missing input fields.");
         return;
     }
 
@@ -482,9 +511,10 @@ function checkout() {
     `;
 
     cart.forEach(item => {
+        const noteHtml = item.notes ? `<br><i style="font-size:0.8rem; color:#666;">Note: ${item.notes}</i>` : '';
         receiptHTML += `
             <div class="review-item">
-                <span>${item.name}</span>
+                <span>${item.name} ${noteHtml}</span>
                 <span>₱${item.price.toFixed(2)}</span>
             </div>
         `;
@@ -504,21 +534,24 @@ function checkout() {
 }
 
 function finalizeOrder(name, table, total) {
-    // 1. Create Order Object
     const newOrder = {
         id: orderIdCounter++,
         customer: name,
         table: table,
-        items: [...cart], // Copy cart
+        items: [...cart],
         total: total,
         status: 'Pending',
         timestamp: new Date().toLocaleString()
     };
     
-    // 2. Add to Orders Array
     allOrders.push(newOrder);
 
-    // 3. Deduct Stock
+    // Stock already deducted upon checkout in some systems, but here we did it visually. 
+    // Actually, simple POS usually deducts on order placement.
+    // Stock logic was handled in `addToCart`? No, addToCart checks stock.
+    // We need to deduct stock NOW if we haven't already.
+    // Wait, previous logic deducted in finalize. Let's keep that.
+    
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
