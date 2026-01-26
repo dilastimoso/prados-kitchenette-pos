@@ -1,4 +1,4 @@
-// --- FULL MENU DATABASE FROM IMAGES ---
+// FULL MENU DATABASE FROM IMAGES
 const menuData = [
     // RICE TOPPINGS
     { id: 101, name: "Chicken", price: 68.00, category: "Rice Toppings" },
@@ -172,19 +172,14 @@ const menuData = [
 
 let cart = [];
 
-// Initialize Categories
 function initCategories() {
-    // Unique categories including "All"
     const categories = ["All", ...new Set(menuData.map(item => item.category))];
     const tabContainer = document.getElementById('category-tabs');
-    
     tabContainer.innerHTML = categories.map(cat => `
-        <button class="tab-btn ${cat === 'All' ? 'active' : ''}" 
-        onclick="filterMenu('${cat}')">${cat}</button>
+        <button class="tab-btn ${cat === 'All' ? 'active' : ''}" onclick="filterMenu('${cat}')">${cat}</button>
     `).join('');
 }
 
-// Display Items
 function displayMenu(items) {
     const grid = document.getElementById('menu-grid');
     grid.innerHTML = items.map(item => `
@@ -195,19 +190,15 @@ function displayMenu(items) {
     `).join('');
 }
 
-// Filter Function
 function filterMenu(category) {
     const filtered = category === 'All' ? menuData : menuData.filter(i => i.category === category);
     displayMenu(filtered);
-    
-    // Update active tab UI
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
         if(btn.innerText === category) btn.classList.add('active');
     });
 }
 
-// Cart Logic
 function addToCart(id) {
     const item = menuData.find(i => i.id === id);
     cart.push(item);
@@ -228,7 +219,7 @@ function renderCart() {
         <div class="cart-item">
             <span style="flex:1">${item.name}</span>
             <span style="font-weight:bold">₱${item.price.toFixed(2)}</span>
-            <span style="color:red; cursor:pointer; margin-left:10px;" onclick="removeFromCart(${index})">✕</span>
+            <span style="color:var(--accent); cursor:pointer; margin-left:10px;" onclick="removeFromCart(${index})">✕</span>
         </div>
     `).join('');
 
@@ -241,9 +232,8 @@ function removeFromCart(index) {
     renderCart();
 }
 
-// --- CUSTOM MODAL LOGIC ---
+// --- NEW MODAL & CHECKOUT LOGIC (REPLACES ALERT) ---
 
-// Helper to show the modal
 function showCustomModal(title, htmlContent, isConfirmType, callback) {
     const modal = document.getElementById('custom-modal');
     const titleEl = document.getElementById('modal-title');
@@ -256,7 +246,7 @@ function showCustomModal(title, htmlContent, isConfirmType, callback) {
     if (isConfirmType) {
         // Show Cancel and Confirm buttons
         actionsEl.innerHTML = `
-            <button class="modal-btn cancel" onclick="closeModal()">Edit Order</button>
+            <button class="modal-btn cancel" onclick="closeModal()">Edit</button>
             <button class="modal-btn confirm" id="dynamic-confirm-btn">Confirm Order</button>
         `;
         document.getElementById('dynamic-confirm-btn').onclick = callback;
@@ -274,24 +264,25 @@ function closeModal() {
     document.getElementById('custom-modal').classList.remove('active');
 }
 
-// Overwritten Checkout Function
+// 1. Validation & Review Modal
 function checkout() {
     const tableNum = document.getElementById('table-num').value;
     const custName = document.getElementById('cust-name').value;
     const custPhone = document.getElementById('cust-phone').value;
     const totalText = document.getElementById('total-price').innerText;
 
-    // Validation using Custom Modal
+    // Error Modal
     if(cart.length === 0) {
-        return showCustomModal("Oops!", "<p style='text-align:center'>Your cart is empty.</p>", false);
+        return showCustomModal("Cart Empty", "<p style='text-align:center'>Please add items to the cart first.</p>", false);
     }
+    // Error Modal
     if(!tableNum || !custName) {
-        return showCustomModal("Missing Info", "<p style='text-align:center'>Please fill in <b>Table Number</b> and <b>Customer Name</b>.</p>", false);
+        return showCustomModal("Missing Details", "<p style='text-align:center'>Please enter <b>Table Number</b> and <b>Customer Name</b>.</p>", false);
     }
 
-    // Build Receipt Preview for the Modal
+    // Build Receipt HTML
     let receiptHTML = `
-        <div style="text-align:center; margin-bottom:10px;">
+        <div style="text-align:center; margin-bottom:10px; font-size:0.95rem;">
             <p><strong>Table:</strong> ${tableNum}</p>
             <p><strong>Customer:</strong> ${custName}</p>
         </div>
@@ -315,13 +306,13 @@ function checkout() {
         </div>
     `;
 
-    // Show the Confirmation Screen
+    // Show Review Modal (Confirm Type = true)
     showCustomModal("Review Order", receiptHTML, true, () => {
-        // Only executes if user clicks "Confirm"
         finalizeOrder(custName, tableNum, custPhone, totalText);
     });
 }
 
+// 2. Final Success Modal
 function finalizeOrder(name, table, phone, total) {
     const orderDetails = {
         customer: name,
@@ -334,21 +325,21 @@ function finalizeOrder(name, table, phone, total) {
 
     console.log("Order Finalized:", orderDetails);
     
-    // Close the review modal
+    // Close Review Modal
     closeModal();
 
     // Show Success Modal
     setTimeout(() => {
-        showCustomModal("Success!", `
+        showCustomModal("Order Placed!", `
             <div style="text-align:center">
                 <p>Order sent to kitchen!</p>
-                <h2 style="color:var(--primary); margin:10px 0;">Table ${table}</h2>
+                <h2 style="color:var(--primary); margin:15px 0;">Table ${table}</h2>
                 <p>Thank you, ${name}</p>
             </div>
         `, false);
     }, 300);
     
-    // Reset Data
+    // Reset Cart
     cart = [];
     renderCart();
     document.getElementById('table-num').value = '';
@@ -356,6 +347,5 @@ function finalizeOrder(name, table, phone, total) {
     document.getElementById('cust-phone').value = '';
 }
 
-// Start
 initCategories();
 displayMenu(menuData);
