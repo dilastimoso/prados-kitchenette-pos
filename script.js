@@ -417,35 +417,29 @@ function useCustomer(name) {
     closeModal();
 }
 
-// --- SALES REPORT (NEW) ---
+// --- SALES REPORT (ROBUST FIX) ---
 
 function showSales() {
-    // 1. Calculate Stats
+    // 1. Calculate Stats safely
     const completedOrders = allOrders.filter(o => o.status === 'Completed');
     
-    // Total Revenue (Fix: parse currency strings like "₱150.00")
-    let totalRevenue = completedOrders.reduce((sum, o) => {
-        let val = parseFloat(o.finalTotal.replace('₱','').replace(',','')) || 0;
-        return sum + val;
-    }, 0);
+    // Total Revenue (Using numericTotal we stored)
+    let totalRevenue = completedOrders.reduce((sum, o) => sum + (o.numericTotal || 0), 0);
 
-    // Today's Sales
-    const todayStr = new Date().toLocaleDateString(); 
+    // Today's Sales (Robust Date Check)
+    const today = new Date();
     const todayOrders = completedOrders.filter(o => {
-        // o.timestamp format: "1/26/2026, 10:00:00 AM"
-        return o.timestamp.startsWith(todayStr); 
+        const orderDate = new Date(o.timestamp);
+        return orderDate.toDateString() === today.toDateString();
     });
     
-    let todayRevenue = todayOrders.reduce((sum, o) => {
-        let val = parseFloat(o.finalTotal.replace('₱','').replace(',','')) || 0;
-        return sum + val;
-    }, 0);
+    let todayRevenue = todayOrders.reduce((sum, o) => sum + (o.numericTotal || 0), 0);
 
     // Payment Breakdown
     let breakdown = { 'Cash': 0, 'GCash': 0, 'Others': 0 };
     completedOrders.forEach(o => {
         let method = o.paymentMethod || 'Cash';
-        let val = parseFloat(o.finalTotal.replace('₱','').replace(',','')) || 0;
+        let val = o.numericTotal || 0;
         
         if (method === 'Cash' || method === 'Unknown/Cash') breakdown['Cash'] += val;
         else if (method === 'GCash') breakdown['GCash'] += val;
@@ -673,7 +667,7 @@ function showOrders() {
     `;
 }
 
-// --- NEW PAYMENT MODAL with Discount Toggle ---
+// --- PAYMENT MODAL with Discount Toggle ---
 function openPaymentModal(orderId) {
     const order = allOrders.find(o => o.id === orderId);
     if(!order) return;
@@ -743,7 +737,11 @@ function confirmPayment(orderId) {
     if(order && select && display) {
         order.paymentMethod = select.value;
         order.paymentStatus = 'Paid';
-        order.finalTotal = display.innerText; // Save the (potentially discounted) total
+        order.finalTotal = display.innerText; 
+        
+        // STORE EXACT NUMBER FOR SALES REPORT
+        order.numericTotal = parseFloat(display.innerText.replace('₱','').replace(',',''));
+        
         updateOrderStatus(orderId, 'Completed');
     }
 }
@@ -781,7 +779,6 @@ function printReceipt(orderId) {
         </div>
     `).join('');
 
-    // Logic to detect if discount was applied
     let discountRow = '';
     let numericFinal = parseFloat(order.finalTotal.replace('₱',''));
     let numericRaw = order.rawTotal;
@@ -921,7 +918,6 @@ function checkout() {
         <p style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">Payment collected AFTER dining.</p>
     `;
 
-    // Pass both totals for history accuracy
     showCustomModal("Review Order", receiptHTML, true, () => {
         finalizeOrder(custName, tableNum, finalTotalStr, rawTotal);
     });
@@ -963,7 +959,6 @@ function finalizeOrder(name, table, finalTotal, rawTotal) {
         });
     }
 
-    // Stock deduction
     cart.forEach(cartItem => {
         const invItem = inventoryData.find(i => i.menu_id === cartItem.id);
         if(invItem) {
