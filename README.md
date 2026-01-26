@@ -1,0 +1,1 @@
+# prados-kitchenette-pos
